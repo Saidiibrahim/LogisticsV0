@@ -1,23 +1,23 @@
-import { createShowCalendarTool } from "./calendar"
-import { createShowMatchStatsTool } from "./match-stats"
-import { createShowTrainingSummaryTool } from "./training-summary"
-import type { ServerSupabaseClient } from "./types"
+/**
+ * Chat tools for CourierRun AI assistant
+ * Provides tool definitions for delivery insights and roster planning
+ */
 
-export interface ChatToolContext {
-  supabase: ServerSupabaseClient
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+interface CreateChatToolsOptions {
+  supabase: SupabaseClient
   userId: string
 }
 
 /**
- * Factory that assembles all chat tools used by the AI SDK integration.
+ * Creates chat tools for the AI assistant with access to Supabase data.
+ * Currently provides roster planning and delivery insights tools.
  *
- * Each tool receives a reference to the authenticated Supabase client so it
- * can run authenticated queries on behalf of the requesting user.
+ * TODO: Implement full tool definitions once AI SDK types are properly configured
  */
-export function createChatTools(context: ChatToolContext) {
-  return {
-    showCalendar: createShowCalendarTool(context),
-    showMatchStats: createShowMatchStatsTool(context),
-    showTrainingSummary: createShowTrainingSummaryTool(context),
-  }
+export function createChatTools({ supabase, userId }: CreateChatToolsOptions) {
+  // Return empty tools object for now - stub implementation
+  // Full implementation requires proper AI SDK tool type configuration
+  return {}
 }

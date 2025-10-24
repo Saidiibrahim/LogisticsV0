@@ -234,7 +234,7 @@ export async function createCoachingSession(
  * The action trusts the caller to provide a valid type and ID combination.
  */
 export async function deleteEvent(
-  eventType: "match" | "training" | "coaching",
+  eventType: "shift" | "training" | "coaching",
   eventId: string
 ): Promise<ActionState> {
   const supabase = await createClient()
@@ -250,15 +250,15 @@ export async function deleteEvent(
   let error = null
 
   switch (eventType) {
-    case "match": {
-      // Check if it's a scheduled match or active match
-      const { error: scheduledError } = await supabase
-        .from("scheduled_matches")
+    case "shift": {
+      // Delete shift from rosters or shifts table
+      const { error: shiftError } = await supabase
+        .from("rosters")
         .delete()
         .eq("id", eventId)
         .eq("owner_id", user.id)
 
-      error = scheduledError
+      error = shiftError
       break
     }
 

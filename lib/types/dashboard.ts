@@ -1,41 +1,32 @@
 /**
- * Quick overview metrics displayed at the top of the dashboard.
+ * Quick overview metrics displayed at the top of the logistics dashboard.
  */
 export interface DashboardQuickStats {
-  matchesThisMonth: number
-  upcomingMatchesCount: number
-  recentAvgRating: number | null
-  totalCardsLast30Days: number
+  activeDrivers: number
+  scheduledShiftsThisWeek: number
+  totalVehicles: number
+  upcomingRosters: number
 }
 
 /**
- * Compact representation of an upcoming scheduled match.
+ * Compact representation of an upcoming driver shift/roster assignment.
  */
-export interface DashboardUpcomingMatch {
+export interface DashboardUpcomingShift {
   id: string
-  kickoffAt: string
-  homeTeamName: string
-  awayTeamName: string
-  competitionName: string | null
-  venueName: string | null
+  date: string
+  driverName: string
+  vanName: string | null
 }
 
 /**
- * Compact representation of a recently completed match.
+ * Compact representation of recent roster activity.
  */
-export interface DashboardRecentMatch {
+export interface DashboardRecentRoster {
   id: string
-  startedAt: string
-  homeTeamName: string
-  awayTeamName: string
-  homeScore: number
-  awayScore: number
-  competitionName: string | null
-  totalCards: number
-  yellowCards: number
-  redCards: number
-  totalGoals: number
-  rating: number | null
+  weekStart: string
+  status: string
+  assignmentsCount: number
+  lastUpdated: string
 }
 
 /**
@@ -43,8 +34,8 @@ export interface DashboardRecentMatch {
  */
 export interface DashboardData {
   quickStats: DashboardQuickStats
-  upcomingMatches: DashboardUpcomingMatch[]
-  recentMatches: DashboardRecentMatch[]
+  upcomingShifts: DashboardUpcomingShift[]
+  recentRosters: DashboardRecentRoster[]
 }
 
 /**

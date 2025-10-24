@@ -59,7 +59,7 @@ export function SidebarHeaderContent() {
             tabIndex={-1}
           >
             <Image
-              alt="RefZone logo"
+              alt="CourierRun logo"
               className="h-7 w-7"
               height={28}
               priority
@@ -89,7 +89,7 @@ export function SidebarHeaderContent() {
     <>
       <div className="flex items-center justify-between">
         <Image
-          alt="RefZone logo"
+          alt="CourierRun logo"
           className="h-8 w-8"
           height={32}
           priority

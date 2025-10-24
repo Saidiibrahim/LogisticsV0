@@ -4,107 +4,28 @@ import { createClient } from "@/lib/supabase/server"
 import type {
   DashboardData,
   DashboardQuickStats,
-  DashboardRecentMatch,
-  DashboardUpcomingMatch,
+  DashboardRecentRoster,
+  DashboardUpcomingShift,
   GetDashboardDataOptions,
 } from "@/lib/types/dashboard"
 import { getErrorMessage } from "@/lib/utils/errors"
+import { addDays, format, startOfWeek } from "date-fns"
 
-const DEFAULT_UPCOMING_LIMIT = 5
+const DEFAULT_UPCOMING_LIMIT = 10
 const DEFAULT_RECENT_LIMIT = 5
 
-type RatingRow = {
-  rating: number | null
-}
-
-type CardsRow = {
-  total_cards: number | null
-}
-
-type UpcomingMatchRow = {
-  id: string
-  kickoff_at: string
-  home_team_name: string
-  away_team_name: string
-  competition_name: string | null
-  venue_name: string | null
-}
-
-type MatchMetricsRow = {
-  total_cards: number | null
-  yellow_cards: number | null
-  red_cards: number | null
-  total_goals: number | null
-} | null
-
-type MatchAssessmentRow = {
-  rating: number | null
-} | null
-
-type RecentMatchRow = {
-  id: string
-  started_at: string
-  home_team_name: string
-  away_team_name: string
-  home_score: number | null
-  away_score: number | null
-  competition_name: string | null
-  match_metrics: MatchMetricsRow | MatchMetricsRow[] | null
-  match_assessments: MatchAssessmentRow | MatchAssessmentRow[] | null
-}
-
-type DashboardQueryErrorContext =
-  | "matchesThisMonth"
-  | "upcomingMatchesCount"
-  | "recentRatings"
-  | "cardsLast30Days"
-  | "upcomingMatches"
-  | "recentMatches"
-
 /**
- * Calculate the first day of the current month in ISO format.
+ * Get the start of the current week (Monday).
  */
-function getFirstDayOfCurrentMonth(): string {
+function getCurrentWeekStart(): string {
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  return firstDay.toISOString()
-}
-
-/**
- * Calculate the date 30 days ago in ISO format.
- */
-function get30DaysAgo(): string {
-  const now = new Date()
-  const thirtyDaysAgo = new Date(now)
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  return thirtyDaysAgo.toISOString()
-}
-
-/**
- * Normalize a Supabase relationship response that may be a single object or array.
- */
-function normalizeSingle<T>(value: T | T[] | null): T | null {
-  if (!value) {
-    return null
-  }
-
-  return Array.isArray(value) ? (value[0] ?? null) : value
-}
-
-/**
- * Log a query-specific error and build user-facing error response.
- */
-function handleQueryError(
-  context: DashboardQueryErrorContext,
-  error: unknown
-): { data: null; error: string } {
-  console.error(`[dashboard] ${context} query error:`, getErrorMessage(error))
-  return { data: null, error: "Failed to load dashboard data" }
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+  return format(weekStart, "yyyy-MM-dd")
 }
 
 /**
  * Fetch comprehensive dashboard data including quick stats,
- * upcoming matches, and recent performance metrics.
+ * upcoming driver shifts, and recent roster activity.
  *
  * @param options - Configuration for data fetching.
  * @returns Dashboard data or error.
@@ -132,195 +53,164 @@ export async function getDashboardData(
       return { data: null, error: "Unauthorized" }
     }
 
-    console.log("[dashboard] Fetching dashboard data", {
+    console.log("[dashboard] Fetching logistics dashboard data", {
       userId: user.id,
       upcomingLimit,
       recentLimit,
     })
 
-    const firstDayOfMonth = getFirstDayOfCurrentMonth()
-    const thirtyDaysAgo = get30DaysAgo()
-    const now = new Date().toISOString()
+    const weekStart = getCurrentWeekStart()
+    const today = format(new Date(), "yyyy-MM-dd")
 
-    const [
-      matchesThisMonthResult,
-      upcomingMatchesResult,
-      recentRatingsResult,
-      cardsLast30DaysResult,
-      upcomingMatchesData,
-      recentMatchesData,
-    ] = await Promise.all([
-      supabase
-        .from("matches")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_id", user.id)
-        .eq("status", "completed")
-        .gte("started_at", firstDayOfMonth),
-      supabase
-        .from("scheduled_matches")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_id", user.id)
-        .eq("status", "scheduled")
-        .gte("kickoff_at", now),
-      supabase
-        .from("match_assessments")
-        .select("rating")
-        .eq("owner_id", user.id)
-        .gte("created_at", thirtyDaysAgo)
-        .not("rating", "is", null),
-      supabase
-        .from("match_metrics")
-        .select("total_cards")
-        .eq("owner_id", user.id)
-        .gte("generated_at", thirtyDaysAgo),
-      supabase
-        .from("scheduled_matches")
-        .select(
-          `
-          id,
-          kickoff_at,
-          home_team_name,
-          away_team_name,
-          competition_name,
-          venue_name
-        `
-        )
-        .eq("owner_id", user.id)
-        .eq("status", "scheduled")
-        .gte("kickoff_at", now)
-        .order("kickoff_at", { ascending: true })
-        .limit(upcomingLimit),
-      supabase
-        .from("matches")
-        .select(
-          `
-          id,
-          started_at,
-          home_team_name,
-          away_team_name,
-          home_score,
-          away_score,
-          competition_name,
-          match_metrics (
-            total_cards,
-            yellow_cards,
-            red_cards,
-            total_goals
-          ),
-          match_assessments (
-            rating
-          )
-        `
-        )
-        .eq("owner_id", user.id)
-        .eq("status", "completed")
-        .order("started_at", { ascending: false })
-        .limit(recentLimit),
-    ])
+    // Get user's organization for filtering
+    const { data: userData, error: userDataError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single()
 
-    if (matchesThisMonthResult.error) {
-      return handleQueryError("matchesThisMonth", matchesThisMonthResult.error)
+    if (userDataError || !userData?.organization_id) {
+      console.error("[dashboard] Failed to get organization", userDataError)
+      return { data: null, error: "Failed to load user organization" }
     }
 
-    if (upcomingMatchesResult.error) {
-      return handleQueryError(
-        "upcomingMatchesCount",
-        upcomingMatchesResult.error
-      )
+    const orgId = userData.organization_id
+
+    // Fetch quick stats
+    const [activeDriversResult, vehiclesResult, weekRosterResult] =
+      await Promise.all([
+        supabase
+          .from("users")
+          .select("id", { count: "exact", head: true })
+          .eq("role", "driver")
+          .eq("is_active", true)
+          .eq("organization_id", orgId),
+        supabase
+          .from("vehicles")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId),
+        supabase
+          .from("roster_assignments")
+          .select("id, week_start_date, assignments")
+          .eq("organization_id", orgId)
+          .gte("week_start_date", weekStart)
+          .limit(10),
+      ])
+
+    if (activeDriversResult.error) {
+      console.error("[dashboard] activeDrivers error:", activeDriversResult.error)
+      return { data: null, error: "Failed to load dashboard data" }
     }
 
-    if (recentRatingsResult.error) {
-      return handleQueryError("recentRatings", recentRatingsResult.error)
+    if (vehiclesResult.error) {
+      console.error("[dashboard] vehicles error:", vehiclesResult.error)
+      return { data: null, error: "Failed to load dashboard data" }
     }
 
-    if (cardsLast30DaysResult.error) {
-      return handleQueryError("cardsLast30Days", cardsLast30DaysResult.error)
+    if (weekRosterResult.error) {
+      console.error("[dashboard] weekRoster error:", weekRosterResult.error)
+      return { data: null, error: "Failed to load dashboard data" }
     }
 
-    if (upcomingMatchesData.error) {
-      return handleQueryError("upcomingMatches", upcomingMatchesData.error)
+    const activeDrivers = activeDriversResult.count ?? 0
+    const totalVehicles = vehiclesResult.count ?? 0
+
+    // Count total assignments for this week across all rosters
+    let scheduledShiftsThisWeek = 0
+    for (const roster of weekRosterResult.data ?? []) {
+      const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
+      scheduledShiftsThisWeek += assignments.length
     }
-
-    if (recentMatchesData.error) {
-      return handleQueryError("recentMatches", recentMatchesData.error)
-    }
-
-    const matchesThisMonth = matchesThisMonthResult.count ?? 0
-    const upcomingMatchesCount = upcomingMatchesResult.count ?? 0
-
-    const ratings = ((recentRatingsResult.data ?? []) as RatingRow[])
-      .map((assessment) => assessment.rating)
-      .filter((rating): rating is number => rating !== null)
-
-    const recentAvgRating =
-      ratings.length > 0
-        ? Number(
-            (
-              ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-            ).toFixed(1)
-          )
-        : null
-
-    const totalCardsLast30Days = (
-      (cardsLast30DaysResult.data ?? []) as CardsRow[]
-    ).reduce((sum, row) => sum + (row.total_cards ?? 0), 0)
 
     const quickStats: DashboardQuickStats = {
-      matchesThisMonth,
-      upcomingMatchesCount,
-      recentAvgRating,
-      totalCardsLast30Days,
+      activeDrivers,
+      scheduledShiftsThisWeek,
+      totalVehicles,
+      upcomingRosters: weekRosterResult.data?.length ?? 0,
     }
 
-    const upcomingMatches: DashboardUpcomingMatch[] = (
-      upcomingMatchesData.data ?? []
-    ).map((match) => {
-      const scheduled = match as UpcomingMatchRow
-      return {
-        id: scheduled.id,
-        kickoffAt: scheduled.kickoff_at,
-        homeTeamName: scheduled.home_team_name,
-        awayTeamName: scheduled.away_team_name,
-        competitionName: scheduled.competition_name,
-        venueName: scheduled.venue_name,
-      }
-    })
+    // Fetch upcoming shifts for next few days from roster assignments
+    const nextWeekEnd = format(addDays(new Date(), 7), "yyyy-MM-dd")
 
-    const recentMatches: DashboardRecentMatch[] = (
-      recentMatchesData.data ?? []
-    ).map((match) => {
-      const typedMatch = match as RecentMatchRow
-      const metrics = normalizeSingle<MatchMetricsRow>(typedMatch.match_metrics)
-      const assessment = normalizeSingle<MatchAssessmentRow>(
-        typedMatch.match_assessments
-      )
+    const { data: upcomingRostersData, error: upcomingError } = await supabase
+      .from("roster_assignments")
+      .select("week_start_date, assignments")
+      .eq("organization_id", orgId)
+      .gte("week_start_date", weekStart)
+      .lte("week_start_date", nextWeekEnd)
+      .order("week_start_date", { ascending: true })
 
-      return {
-        id: typedMatch.id,
-        startedAt: typedMatch.started_at,
-        homeTeamName: typedMatch.home_team_name,
-        awayTeamName: typedMatch.away_team_name,
-        homeScore: typedMatch.home_score ?? 0,
-        awayScore: typedMatch.away_score ?? 0,
-        competitionName: typedMatch.competition_name,
-        totalCards: metrics?.total_cards ?? 0,
-        yellowCards: metrics?.yellow_cards ?? 0,
-        redCards: metrics?.red_cards ?? 0,
-        totalGoals: metrics?.total_goals ?? 0,
-        rating: assessment?.rating ?? null,
+    if (upcomingError) {
+      console.error("[dashboard] upcomingShifts error:", upcomingError)
+    }
+
+    // Flatten assignments and filter for upcoming dates
+    const upcomingShifts: DashboardUpcomingShift[] = []
+    for (const roster of upcomingRostersData ?? []) {
+      const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
+      for (const assignment of assignments) {
+        if (assignment.date >= today && upcomingShifts.length < upcomingLimit) {
+          // Fetch driver details
+          const { data: driver } = await supabase
+            .from("users")
+            .select("id, full_name, vehicle_id, vehicles:vehicle_id(registration_number, make, model)")
+            .eq("id", assignment.driverId)
+            .single()
+
+          if (driver) {
+            // Cast vehicles to the correct type (Supabase returns single object for foreign key, not array)
+            const vehicle = driver.vehicles as any
+            upcomingShifts.push({
+              id: `${assignment.date}-${assignment.driverId}`,
+              date: assignment.date,
+              driverName: driver.full_name ?? "Unknown Driver",
+              vanName: vehicle
+                ? `${vehicle.make || ""} ${vehicle.model || ""}`.trim() ||
+                  vehicle.registration_number ||
+                  null
+                : null,
+            })
+          }
+        }
       }
-    })
+    }
+
+    // Sort by date and limit
+    upcomingShifts.sort((a, b) => a.date.localeCompare(b.date))
+    upcomingShifts.splice(upcomingLimit)
+
+    // Fetch recent rosters
+    const { data: recentRostersData, error: recentError } = await supabase
+      .from("roster_assignments")
+      .select("id, week_start_date, status, version, last_modified_at, assignments")
+      .eq("organization_id", orgId)
+      .order("week_start_date", { ascending: false })
+      .limit(recentLimit)
+
+    if (recentError) {
+      console.error("[dashboard] recentRosters error:", recentError)
+    }
+
+    const recentRosters: DashboardRecentRoster[] = (
+      recentRostersData ?? []
+    ).map((roster: any) => ({
+      id: roster.id,
+      weekStart: roster.week_start_date,
+      status: roster.status,
+      assignmentsCount: Array.isArray(roster.assignments) ? roster.assignments.length : 0,
+      lastUpdated: roster.last_modified_at,
+    }))
 
     const dashboardData: DashboardData = {
       quickStats,
-      upcomingMatches,
-      recentMatches,
+      upcomingShifts,
+      recentRosters,
     }
 
     console.log("[dashboard] Dashboard data prepared", {
       quickStats,
-      upcomingMatchesCount: upcomingMatches.length,
-      recentMatchesCount: recentMatches.length,
+      upcomingShiftsCount: upcomingShifts.length,
+      recentRostersCount: recentRosters.length,
     })
 
     return { data: dashboardData, error: null }

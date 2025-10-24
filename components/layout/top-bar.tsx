@@ -22,13 +22,12 @@ interface TopBarProps {
 }
 
 const breadcrumbLabels: Record<string, string> = {
-  "/welcome": "Welcome",
+  "/welcome": "Dashboard",
   "/calendar": "Calendar",
-  "/matches": "Matches",
-  "/analytics": "Stats",
+  "/deliveries": "Deliveries",
+  "/routes": "Routes",
   "/chat": "Chat",
   "/settings": "Settings",
-  "/library": "Resource Library",
 }
 
 function formatSegment(segment: string) {

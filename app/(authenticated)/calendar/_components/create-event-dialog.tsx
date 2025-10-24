@@ -341,7 +341,7 @@ function TrainingForm({
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="refereeDrill">Referee Drill</SelectItem>
+            <SelectItem value="driverTraining">Driver Training</SelectItem>
             <SelectItem value="strength">Strength Training</SelectItem>
             <SelectItem value="mobility">Mobility</SelectItem>
             <SelectItem value="outdoorRun">Outdoor Run</SelectItem>

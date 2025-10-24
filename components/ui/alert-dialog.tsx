@@ -60,7 +60,7 @@ function AlertDialogOverlay({
 }
 
 /**
- * Centers the alert dialog and applies the RefZone surface styles.
+ * Centers the alert dialog and applies the CourierRun surface styles.
  */
 function AlertDialogContent({
   className,

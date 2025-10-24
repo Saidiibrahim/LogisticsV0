@@ -1,27 +1,63 @@
-# To-Do List
+# CourierRun - To-Do List
 
-## Future Enhancements (Out of Scope for MVP)
+## Completed ✅
 
-- Search and filter functionality
-- Export match data to PDF/CSV
-- Share match details with other users
-- Match statistics and analytics
-- Calendar view integration
-- Match reminders/notifications
+- [x] Migrate from RefZone to CourierRun branding
+- [x] Fix database queries to use actual Supabase schema (users, vehicles, roster_assignments)
+- [x] Implement Resend email integration for roster notifications
+- [x] Update dashboard with logistics metrics
+- [x] Support empty roster drafts
+- [x] Add organization-level multi-tenant filtering
+- [x] Update documentation (README, .env.example)
 
-## Stats Page Enhancements (via tabs similar to the calendar page)
+## In Progress 🚧
 
-- [ ] integrate workout stats into the stats page
-- [ ] integrate assessment stats into the stats page
-- [ ] integrate referee stats into the stats page
+- [ ] Wire up email notifications in roster publish flow
+- [ ] Implement "Copy previous week" roster functionality
+- [ ] Update calendar event types from referee to logistics
+- [ ] Remove remaining referee components (chat widgets, etc.)
 
-## Settings Page
+## Future Enhancements 🚀
 
-- [x] move the teams, venues and competitions into the settings page
+### Roster Management
+- [ ] Roster templates for recurring schedules
+- [ ] Bulk assignment tools
+- [ ] Driver availability/time-off management
+- [ ] Roster conflict detection and warnings
+- [ ] Export rosters to PDF/CSV
 
-## Test Coverage
+### Delivery Tracking
+- [ ] Real-time driver location tracking
+- [ ] Delivery status updates
+- [ ] Photo proof of delivery
+- [ ] Customer signature capture
+- [ ] Delivery time estimates
+
+### Route Optimization
+- [ ] Automatic route optimization
+- [ ] Traffic-aware routing
+- [ ] Multi-stop route planning
+- [ ] Route deviation alerts
+
+### Analytics & Reporting
+- [ ] Driver performance metrics
+- [ ] Delivery success rates
+- [ ] Fleet utilization reports
+- [ ] Cost per delivery analytics
+- [ ] Custom report builder
+
+### Mobile App
+- [ ] Driver mobile app (React Native)
+- [ ] Offline mode for rural deliveries
+- [ ] Push notifications
+- [ ] In-app navigation
+
+## Test Coverage 🧪
 
 Possible next steps:
 
-1. Wire pnpm test:run (and optionally pnpm test:coverage) into CI to enforce the new gates.
-2. Consider adding MSW-powered integration tests once API surfaces stabilise.
+1. Add unit tests for roster store and actions
+2. Add tests for email notification functions
+3. Add integration tests for dashboard data fetching
+4. Wire pnpm test:run into CI to enforce quality gates
+5. Consider adding MSW-powered API mocks for testing

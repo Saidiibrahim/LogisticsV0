@@ -1,25 +1,21 @@
 /**
  * Calendar event categories used as discriminators across the union.
  */
-export type EventType = "match" | "training" | "coaching"
+export type EventType = "shift" | "training" | "coaching"
 
 /**
  * Status options shared by all calendar event types.
  */
 export type EventStatus =
-  | "scheduled" // For matches and coaching sessions
-  | "in_progress" // For active matches
-  | "completed" // For completed matches
-  | "canceled" // For canceled matches
+  | "scheduled" // For shifts and coaching sessions
+  | "in_progress" // For active shifts
+  | "completed" // For completed shifts
+  | "canceled" // For canceled shifts
   | "planned" // For planned training/coaching
   | "active" // For active training
   | "ended" // For ended training
   | "aborted" // For aborted training
 
-/**
- * Additional classification for match events, derived from competition data.
- */
-export type MatchType = "league" | "cup" | "friendly" | "tournament"
 
 /**
  * Enumerates the workout kinds stored in `workout_sessions`.
@@ -31,7 +27,7 @@ export type TrainingKind =
   | "indoorCycle"
   | "strength"
   | "mobility"
-  | "refereeDrill"
+  | "driverTraining"
   | "custom"
 
 /**
@@ -60,22 +56,15 @@ export interface BaseCalendarEvent {
 }
 
 /**
- * Calendar representation of both scheduled and historical matches.
+ * Calendar representation of driver shifts.
  */
-export interface MatchEvent extends BaseCalendarEvent {
-  type: "match"
-  matchType?: MatchType // Derived from competition or user preference
-  competition_name?: string
-  venue_name?: string
-  teams: {
-    home: string
-    away: string
-  }
-  home_score?: number
-  away_score?: number
+export interface ShiftEvent extends BaseCalendarEvent {
+  type: "shift"
+  driver_name?: string
+  vehicle_id?: string
+  route_name?: string
   // Reference to source table
-  scheduled_match_id?: string
-  match_id?: string
+  shift_id?: string
 }
 
 /**
@@ -107,7 +96,7 @@ export interface CoachingEvent extends BaseCalendarEvent {
 /**
  * Discriminated union that describes every possible calendar event variant.
  */
-export type CalendarEvent = MatchEvent | TrainingEvent | CoachingEvent
+export type CalendarEvent = ShiftEvent | TrainingEvent | CoachingEvent
 
 /**
  * Store representation of calendar filtering options.
@@ -120,10 +109,10 @@ export interface CalendarFilters {
 
 // Helper type guards
 /**
- * Narrow a calendar event to the match variant.
+ * Narrow a calendar event to the shift variant.
  */
-export function isMatchEvent(event: CalendarEvent): event is MatchEvent {
-  return event.type === "match"
+export function isShiftEvent(event: CalendarEvent): event is ShiftEvent {
+  return event.type === "shift"
 }
 
 /**
@@ -144,7 +133,7 @@ export function isCoachingEvent(event: CalendarEvent): event is CoachingEvent {
  * Utility map that controls the accent color for each event type.
  */
 export const eventTypeColors: Record<EventType, string> = {
-  match: "bg-blue-500",
+  shift: "bg-blue-500",
   training: "bg-green-500",
   coaching: "bg-purple-500",
 }

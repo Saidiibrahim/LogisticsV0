@@ -4,15 +4,16 @@ import { GeistSans } from "geist/font/sans"
 import type { Metadata } from "next"
 import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ToastProvider } from "@/components/ui/use-toast"
 import "./globals.css"
 
 /**
  * Static metadata shared across all routes so that search engines and social
- * cards consistently describe the RefZone Pro application.
+ * cards consistently describe the LogisticsHub application.
  */
 export const metadata: Metadata = {
-  title: "RefZone",
-  description: "Professional referee management dashboard",
+  title: "LogisticsHub",
+  description: "Professional driver and fleet management platform",
   generator: "v0.app",
   icons: {
     icon: [{ rel: "icon", type: "image/svg+xml", url: "/favicon.svg" }],
@@ -39,7 +40,9 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </ThemeProvider>
         <WebVitalsReporter />
         <Analytics />

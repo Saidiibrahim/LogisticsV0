@@ -40,7 +40,7 @@ import {
   eventStatusStyles,
   eventTypeColors,
   isCoachingEvent,
-  isMatchEvent,
+  isShiftEvent,
   isTrainingEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
@@ -75,7 +75,7 @@ export function EventDetailsDialog({
   // Choose a contextual icon based on the event type so the dialog feels
   // consistent with the view cards
   const getTypeIcon = () => {
-    if (isMatchEvent(event)) return <Trophy className="size-5" />
+    if (isShiftEvent(event)) return <Trophy className="size-5" />
     if (isTrainingEvent(event)) return <Dumbbell className="size-5" />
     if (isCoachingEvent(event)) return <GraduationCap className="size-5" />
     return null
@@ -85,8 +85,8 @@ export function EventDetailsDialog({
     startTransition(async () => {
       // Map to the specific table record the event originated from
       let eventId = event.id
-      if (isMatchEvent(event)) {
-        eventId = event.scheduled_match_id || event.match_id || event.id
+      if (isShiftEvent(event)) {
+        eventId = event.shift_id || event.id
       } else if (isTrainingEvent(event)) {
         eventId = event.workout_session_id
       } else if (isCoachingEvent(event)) {
@@ -123,8 +123,8 @@ export function EventDetailsDialog({
                 <Badge variant="outline" className="capitalize">
                   {getTypeIcon()}
                   <span className="ml-1">
-                    {event.type === "match"
-                      ? "Match"
+                    {event.type === "shift"
+                      ? "Shift"
                       : event.type === "training"
                         ? "Training"
                         : "Coaching"}
@@ -183,46 +183,45 @@ export function EventDetailsDialog({
               </>
             )}
 
-            {/* Match-specific details */}
-            {isMatchEvent(event) && (
+            {/* Shift-specific details */}
+            {isShiftEvent(event) && (
               <>
-                {event.teams && (
+                {event.driver_name && (
                   <>
                     <div className="flex items-start gap-3">
                       <Users className="mt-0.5 size-5 text-muted-foreground" />
-                      <div className="w-full">
-                        <div className="font-medium">Teams</div>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex items-center justify-between rounded-md border p-3">
-                            <span className="font-medium">Home</span>
-                            <span className="text-muted-foreground">
-                              {event.teams.home}
-                              {event.home_score !== undefined &&
-                                ` (${event.home_score})`}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-md border p-3">
-                            <span className="font-medium">Away</span>
-                            <span className="text-muted-foreground">
-                              {event.teams.away}
-                              {event.away_score !== undefined &&
-                                ` (${event.away_score})`}
-                            </span>
-                          </div>
+                      <div>
+                        <div className="font-medium">Driver</div>
+                        <div className="text-muted-foreground text-sm">
+                          {event.driver_name}
                         </div>
                       </div>
                     </div>
                     <Separator />
                   </>
                 )}
-                {event.competition_name && (
+                {event.vehicle_id && (
                   <>
                     <div className="flex items-start gap-3">
                       <Trophy className="mt-0.5 size-5 text-muted-foreground" />
                       <div>
-                        <div className="font-medium">Competition</div>
+                        <div className="font-medium">Vehicle</div>
                         <div className="text-muted-foreground text-sm">
-                          {event.competition_name}
+                          {event.vehicle_id}
+                        </div>
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
+                {event.route_name && (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <MapPin className="mt-0.5 size-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">Route</div>
+                        <div className="text-muted-foreground text-sm">
+                          {event.route_name}
                         </div>
                       </div>
                     </div>

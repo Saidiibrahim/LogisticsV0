@@ -12,8 +12,7 @@
  * Available widget types that can be rendered in the chat interface.
  *
  * Each widget type corresponds to a specific visualization component:
- * - `calendar`: Displays upcoming matches, training sessions, and events
- * - `match-stats`: Shows statistics and performance metrics from matches
+ * - `calendar`: Displays upcoming shifts, training sessions, and events
  * - `training-summary`: Displays training session data and workload summaries
  * - `performance-chart`: Renders performance trends and analytics (future)
  *
@@ -21,7 +20,6 @@
  */
 export type WidgetType =
   | "calendar"
-  | "match-stats"
   | "training-summary"
   | "performance-chart"
 
@@ -65,7 +63,7 @@ export interface WidgetConfig {
 /**
  * Calendar widget data structure.
  *
- * Contains an array of upcoming events including matches, training sessions,
+ * Contains an array of upcoming events including shifts, training sessions,
  * and coaching appointments. Events are typically filtered by date range
  * and event type on the server side.
  *
@@ -77,11 +75,11 @@ export interface WidgetConfig {
  *   events: [
  *     {
  *       id: "evt-1",
- *       title: "Premier League: Arsenal vs Chelsea",
- *       type: "match",
+ *       title: "Morning Delivery Shift",
+ *       type: "shift",
  *       date: "2025-10-15T00:00:00Z",
- *       time: "15:00",
- *       location: "Emirates Stadium"
+ *       time: "08:00",
+ *       location: "Downtown Depot"
  *     }
  *   ]
  * }
@@ -94,7 +92,7 @@ export interface CalendarWidgetData {
     /** Event title/description */
     title: string
     /** Event category */
-    type: "match" | "training" | "coaching"
+    type: "shift" | "training" | "coaching"
     /** ISO date string */
     date: string
     /** Time in HH:MM format */
@@ -104,35 +102,6 @@ export interface CalendarWidgetData {
   }>
 }
 
-/**
- * Match statistics widget data structure.
- *
- * Contains performance metrics and statistics from officiating matches.
- * Stats can be for a specific match or aggregated across multiple matches.
- *
- * @property {Array} stats - List of labeled statistics
- * @property {string} [matchId] - Optional specific match identifier
- *
- * @example
- * ```typescript
- * const matchStats: MatchStatsWidgetData = {
- *   stats: [
- *     { label: "Matches Officiated", value: 24 },
- *     { label: "Correct Decisions", value: "95%" }
- *   ],
- *   matchId: "match-123"
- * }
- * ```
- */
-export interface MatchStatsWidgetData {
-  /** Array of labeled statistics (supports both numeric and string values) */
-  stats: Array<{
-    label: string
-    value: string | number
-  }>
-  /** Optional match identifier for match-specific stats */
-  matchId?: string
-}
 
 /**
  * Training summary widget data structure.
@@ -185,12 +154,10 @@ export interface TrainingSummaryWidgetData {
  * The `null` option represents a widget with no data (loading state or error).
  *
  * @see {@link CalendarWidgetData}
- * @see {@link MatchStatsWidgetData}
  * @see {@link TrainingSummaryWidgetData}
  */
 export type WidgetData =
   | CalendarWidgetData
-  | MatchStatsWidgetData
   | TrainingSummaryWidgetData
   | null
 

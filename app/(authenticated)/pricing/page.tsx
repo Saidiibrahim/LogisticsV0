@@ -16,32 +16,32 @@ import { cn } from "@/lib/utils"
 
 const plans = [
   {
-    name: "RefZone Plus",
+    name: "CourierRun Plus",
     price: "$18",
     cadence: "per month",
-    description: "Expanded tools for referees growing their match load.",
+    description: "Expanded tools for growing logistics operations.",
     cta: "Start 14-day trial",
     highlight: false,
     features: [
-      "Automated match performance summaries",
-      "Unlimited assignment notes",
+      "Automated shift performance summaries",
+      "Unlimited roster notes",
       "Priority scheduling insights",
-      "Video moment bookmarks",
+      "Route tracking and history",
       "1:1 onboarding session",
     ],
   },
   {
-    name: "RefZone Pro",
+    name: "CourierRun Pro",
     price: "$42",
     cadence: "per month",
-    description: "Full platform access for officiating crews and coordinators.",
+    description: "Full platform access for logistics teams and fleet coordinators.",
     cta: "Upgrade to Pro",
     highlight: true,
     features: [
-      "Crew-wide analytics dashboards",
-      "Advanced scouting reports",
-      "Unlimited video storage",
-      "API access for league systems",
+      "Fleet-wide analytics dashboards",
+      "Advanced driver performance reports",
+      "Unlimited document storage",
+      "API access for dispatch systems",
       "Dedicated success manager",
     ],
   },
@@ -79,11 +79,11 @@ export default function PricingPage() {
 
           <div className="max-w-2xl space-y-3">
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Choose the plan that fits your crew
+              Choose the plan that fits your fleet
             </h1>
             <p className="text-sm text-neutral-400 sm:text-base">
-              Placeholder content for pricing copy. Highlight how RefZone adapts
-              to professional and grassroots officiating teams.
+              Placeholder content for pricing copy. Highlight how CourierRun adapts
+              to enterprise fleets and small logistics operations.
             </p>
           </div>
 

@@ -62,7 +62,6 @@ import { ChatWidgetPanel } from "./chat-widget-panel"
  */
 const WIDGET_TITLES: Record<WidgetType, string> = {
   calendar: "Upcoming Events",
-  "match-stats": "Match Statistics",
   "training-summary": "Training Overview",
   "performance-chart": "Performance Insights",
 }

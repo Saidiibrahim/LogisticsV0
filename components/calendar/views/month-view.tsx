@@ -19,7 +19,7 @@ import { useCalendarStore } from "@/lib/stores/calendar-store"
 import {
   type CalendarEvent,
   eventTypeColors,
-  isMatchEvent,
+  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -93,12 +93,12 @@ export function MonthView({ onEventClick }: MonthViewProps) {
         event.title.toLowerCase().includes(query) ||
         event.location?.toLowerCase().includes(query)
 
-      // Match-specific search
-      if (isMatchEvent(event) && event.teams) {
+      // Shift-specific search
+      if (isShiftEvent(event)) {
         matchesSearch =
           matchesSearch ||
-          event.teams.home.toLowerCase().includes(query) ||
-          event.teams.away.toLowerCase().includes(query)
+          event.driver_name?.toLowerCase().includes(query) ||
+          event.route_name?.toLowerCase().includes(query)
       }
 
       if (!matchesSearch) {

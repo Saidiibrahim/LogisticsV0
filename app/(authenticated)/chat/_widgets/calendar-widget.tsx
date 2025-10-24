@@ -14,11 +14,11 @@ const FALLBACK_EVENTS: CalendarWidgetData = {
   events: [
     {
       id: "evt-1",
-      title: "Premier League: Arsenal vs Chelsea",
-      type: "match",
+      title: "Morning Delivery Shift",
+      type: "shift",
       date: new Date().toISOString(),
-      time: "15:00",
-      location: "Emirates Stadium",
+      time: "08:00",
+      location: "Downtown Depot",
     },
     {
       id: "evt-2",
@@ -39,8 +39,8 @@ const FALLBACK_EVENTS: CalendarWidgetData = {
   ],
 }
 
-const typeStyles: Record<"match" | "training" | "coaching", string> = {
-  match: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
+const typeStyles: Record<"shift" | "training" | "coaching", string> = {
+  shift: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
   training: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
   coaching: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
 }

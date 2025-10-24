@@ -2,11 +2,8 @@
 
 import {
   Calendar,
-  ClipboardList,
-  FileText,
   LayoutDashboard,
   MessageSquare,
-  TrendingUp,
 } from "lucide-react"
 import { ComponentType, SVGProps } from "react"
 
@@ -33,7 +30,7 @@ export type LibraryNavSection = {
  */
 export const mainNavItems: NavigationItem[] = [
   {
-    title: "Welcome",
+    title: "Dashboard",
     icon: LayoutDashboard,
     href: "/welcome",
   },
@@ -41,16 +38,6 @@ export const mainNavItems: NavigationItem[] = [
     title: "Calendar",
     icon: Calendar,
     href: "/calendar",
-  },
-  {
-    title: "Matches",
-    icon: ClipboardList,
-    href: "/matches",
-  },
-  {
-    title: "Stats",
-    icon: TrendingUp,
-    href: "/analytics",
   },
   {
     title: "Chat",
@@ -62,17 +49,7 @@ export const mainNavItems: NavigationItem[] = [
 /**
  * Library sections displayed below the main navigation.
  */
-export const libraryNavSections: LibraryNavSection[] = [
-  {
-    items: [
-      {
-        title: "Assessments",
-        icon: FileText,
-        href: "/library/assessments",
-      },
-    ],
-  },
-]
+export const libraryNavSections: LibraryNavSection[] = []
 
 /**
  * Flat list of library items used by features that do not care about grouping.

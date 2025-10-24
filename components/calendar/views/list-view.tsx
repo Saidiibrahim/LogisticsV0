@@ -8,7 +8,7 @@ import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
-  isMatchEvent,
+  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -39,9 +39,9 @@ export function ListView({ onEventClick }: ListViewProps) {
         const matchesSearch =
           event.title.toLowerCase().includes(query) ||
           event.location?.toLowerCase().includes(query) ||
-          (isMatchEvent(event) &&
-            (event.teams?.home.toLowerCase().includes(query) ||
-              event.teams?.away.toLowerCase().includes(query)))
+          (isShiftEvent(event) &&
+            (event.driver_name?.toLowerCase().includes(query) ||
+              event.route_name?.toLowerCase().includes(query)))
         if (!matchesSearch) {
           return false
         }
@@ -132,10 +132,10 @@ export function ListView({ onEventClick }: ListViewProps) {
                                 {event.title}
                               </h4>
 
-                              {/* Teams */}
-                              {isMatchEvent(event) && event.teams && (
+                              {/* Driver & Route */}
+                              {isShiftEvent(event) && (event.driver_name || event.route_name) && (
                                 <div className="text-muted-foreground text-sm">
-                                  {event.teams.home} vs {event.teams.away}
+                                  {event.driver_name}{event.driver_name && event.route_name ? ' - ' : ''}{event.route_name}
                                 </div>
                               )}
 

@@ -10,24 +10,6 @@ interface CalendarToolContext {
   userId: string
 }
 
-// Test comment
-interface RawScheduledMatch {
-  id: string
-  home_team_name: string
-  away_team_name: string
-  kickoff_at: string
-  venue_name: string | null
-  status: string | null
-}
-
-interface RawMatch {
-  id: string
-  home_team_name: string
-  away_team_name: string
-  started_at: string
-  venue_name: string | null
-  status: string | null
-}
 
 interface RawTrainingSession {
   id: string
@@ -86,64 +68,6 @@ async function fetchCalendarEvents(
 
   const requests: Array<PromiseLike<CalendarWidgetData["events"]>> = []
 
-  if (filterType === "all" || filterType === "matches") {
-    const scheduledMatchesPromise = supabase
-      .from("scheduled_matches")
-      .select(
-        "id, home_team_name, away_team_name, kickoff_at, venue_name, status"
-      )
-      .eq("owner_id", userId)
-      .gte("kickoff_at", now.toISOString())
-      .lte("kickoff_at", endDate.toISOString())
-      .order("kickoff_at", { ascending: true })
-      .limit(MAX_EVENTS)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("[chat-tools] Error fetching scheduled matches:", error)
-          return []
-        }
-
-        return (data ?? []).map((match: RawScheduledMatch) =>
-          mapToWidgetEvent(
-            "match",
-            `scheduled-${match.id}`,
-            `${match.home_team_name} vs ${match.away_team_name}`,
-            new Date(match.kickoff_at),
-            match.venue_name
-          )
-        )
-      })
-
-    const liveMatchesPromise = supabase
-      .from("matches")
-      .select(
-        "id, home_team_name, away_team_name, started_at, venue_name, status"
-      )
-      .eq("owner_id", userId)
-      .neq("status", "completed")
-      .gte("started_at", now.toISOString())
-      .lte("started_at", endDate.toISOString())
-      .order("started_at", { ascending: true })
-      .limit(MAX_EVENTS)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("[chat-tools] Error fetching active matches:", error)
-          return []
-        }
-
-        return (data ?? []).map((match: RawMatch) =>
-          mapToWidgetEvent(
-            "match",
-            `match-${match.id}`,
-            `${match.home_team_name} vs ${match.away_team_name}`,
-            new Date(match.started_at),
-            match.venue_name
-          )
-        )
-      })
-
-    requests.push(scheduledMatchesPromise, liveMatchesPromise)
-  }
 
   if (filterType === "all" || filterType === "training") {
     const trainingPromise = supabase

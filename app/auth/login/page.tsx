@@ -2,7 +2,7 @@ import { HeroIllustration } from "@/components/hero-illustration"
 import { LoginForm } from "@/components/login-form"
 
 /**
- * Renders the login form centered within the viewport for returning referees.
+ * Renders the login form centered within the viewport for returning drivers and logistics managers.
  */
 export default function Page() {
   return (
@@ -11,14 +11,13 @@ export default function Page() {
         <div className="mx-auto flex w-full max-w-md flex-col gap-10">
           <header className="space-y-4 text-center lg:text-left">
             <span className="inline-flex w-fit items-center justify-center rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              RefZone
+              CourierRun
             </span>
             <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">
-              Officiating made simple.
+              Logistics made simple.
             </h1>
             <p className="text-base text-muted-foreground">
-              Sign in to manage assignments, track performance, and stay ready
-              for the next game.
+              Sign in to manage shifts, track driver schedules, and keep your fleet running smoothly.
             </p>
           </header>
           <LoginForm className="mx-auto w-full max-w-sm lg:mx-0" />

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 
 // Event type labels for display
 const eventTypeLabels: Record<EventType, string> = {
-  match: "Matches",
+  shift: "Shifts",
   training: "Training Sessions",
   coaching: "Coaching Sessions",
 }

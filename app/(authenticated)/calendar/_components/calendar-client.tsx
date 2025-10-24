@@ -12,6 +12,8 @@ import { WeekView } from "@/components/calendar/views/week-view"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
 import type { CalendarEvent } from "@/lib/types/calendar"
 import { CreateEventDialog } from "./create-event-dialog"
+import { Button } from "@/components/ui/button"
+import { WeeklyRosterDialog } from "@/components/calendar/weekly-roster-dialog"
 
 /**
  * Props accepted by the client calendar shell. The server preloads events and
@@ -29,6 +31,7 @@ export function CalendarClient({ initialEvents }: CalendarClientProps) {
   const { currentView, setEvents } = useCalendarStore()
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [rosterOpen, setRosterOpen] = useState(false)
 
   // Load initial events on mount
   useEffect(() => {
@@ -62,7 +65,12 @@ export function CalendarClient({ initialEvents }: CalendarClientProps) {
     <div className="flex h-screen flex-col">
       <div className="flex items-center justify-between gap-4 border-b bg-background px-6 py-4">
         <CalendarHeader />
-        <CreateEventDialog />
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setRosterOpen(true)}>
+            Weekly Roster
+          </Button>
+          <CreateEventDialog />
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -78,6 +86,7 @@ export function CalendarClient({ initialEvents }: CalendarClientProps) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />
+      <WeeklyRosterDialog open={rosterOpen} onOpenChange={setRosterOpen} />
     </div>
   )
 }

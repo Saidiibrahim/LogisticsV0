@@ -16,7 +16,7 @@ const FALLBACK_SUMMARY: TrainingSummaryWidgetData = {
   },
   recentSessions: [
     { name: "Outdoor Run", duration: "45m", intensity: 8 },
-    { name: "Referee Drills", duration: "60m", intensity: 7 },
+    { name: "Driver Training", duration: "60m", intensity: 7 },
     { name: "Strength Training", duration: "40m", intensity: 6 },
   ],
 }

@@ -1,7 +1,7 @@
 import { SignUpForm } from "@/components/sign-up-form"
 
 /**
- * Presents the registration form for new officials to create their RefZone
+ * Presents the registration form for new drivers and logistics managers to create their CourierRun
  * account.
  */
 export default function Page() {

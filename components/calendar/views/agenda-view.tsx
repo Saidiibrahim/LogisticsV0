@@ -9,7 +9,7 @@ import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
-  isMatchEvent,
+  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -40,9 +40,9 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
         const matchesSearch =
           event.title.toLowerCase().includes(query) ||
           event.location?.toLowerCase().includes(query) ||
-          (isMatchEvent(event) &&
-            (event.teams?.home.toLowerCase().includes(query) ||
-              event.teams?.away.toLowerCase().includes(query)))
+          (isShiftEvent(event) &&
+            (event.driver_name?.toLowerCase().includes(query) ||
+              event.route_name?.toLowerCase().includes(query)))
         if (!matchesSearch) {
           return false
         }
@@ -141,12 +141,12 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
                             </div>
                           )}
 
-                          {/* Teams */}
-                          {isMatchEvent(event) && event.teams && (
+                          {/* Driver & Route */}
+                          {isShiftEvent(event) && (event.driver_name || event.route_name) && (
                             <div className="flex items-center gap-2 text-muted-foreground text-sm sm:col-span-2">
                               <Users className="size-4 shrink-0" />
                               <span>
-                                {event.teams.home} vs {event.teams.away}
+                                {event.driver_name}{event.driver_name && event.route_name ? ' - ' : ''}{event.route_name}
                               </span>
                             </div>
                           )}

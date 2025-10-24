@@ -15,8 +15,7 @@
  * - Fallback UI for unsupported widget types
  *
  * **Supported Widgets:**
- * - Calendar: Upcoming matches and training sessions
- * - Match Stats: Performance metrics and statistics
+ * - Calendar: Upcoming shifts and training sessions
  * - Training Summary: Training workload and session details
  *
  * @module app/(authenticated)/chat/_components/chat-widget-panel
@@ -50,17 +49,6 @@ const CalendarWidget = dynamic(
   { loading: () => <WidgetSkeleton /> }
 )
 
-/**
- * Match stats widget - dynamically imported for code-splitting.
- * Shows loading skeleton while component loads.
- */
-const MatchStatsWidget = dynamic(
-  () =>
-    import("../_widgets/match-stats-widget").then(
-      (mod) => mod.MatchStatsWidget
-    ),
-  { loading: () => <WidgetSkeleton /> }
-)
 
 /**
  * Training summary widget - dynamically imported for code-splitting.
@@ -106,8 +94,6 @@ export function ChatWidgetPanel({ widget }: ChatWidgetPanelProps) {
     switch (widget.type) {
       case "calendar":
         return <CalendarWidget data={widget.data} />
-      case "match-stats":
-        return <MatchStatsWidget data={widget.data} />
       case "training-summary":
         return <TrainingSummaryWidget data={widget.data} />
       default:

@@ -1,6 +1,6 @@
-import { Calendar, ClipboardList, ShieldAlert, Star } from "lucide-react"
+import { Calendar, Truck, Users, CalendarDays } from "lucide-react"
 
-import { StatsCard } from "@/app/(authenticated)/analytics/_components/stats-card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DashboardQuickStats } from "@/lib/types/dashboard"
 
 /**
@@ -19,18 +19,40 @@ interface DashboardStatsProps {
 }
 
 /**
- * Dashboard quick stats section displaying key metrics in a grid layout.
+ * Individual stat card component for logistics metrics.
+ */
+interface StatsCardProps {
+  title: string
+  value: string | number
+  icon: React.ElementType
+  description?: string
+}
+
+function StatsCard({ title, value, icon: Icon, description }: StatsCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="font-medium text-sm">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="font-bold text-2xl">{value}</div>
+        {description && (
+          <p className="text-muted-foreground text-xs">{description}</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/**
+ * Dashboard quick stats section displaying key logistics metrics in a grid layout.
  *
  * Displays four primary metrics:
- * - Matches this month
- * - Upcoming matches count
- * - Recent average rating
- * - Total cards in last 30 days
- *
- * @example
- * ```tsx
- * <DashboardStats stats={quickStats} />
- * ```
+ * - Active drivers
+ * - Scheduled shifts this week
+ * - Total vehicles
+ * - Upcoming rosters
  */
 export function DashboardStats({
   stats,
@@ -52,35 +74,31 @@ export function DashboardStats({
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
-        title="Matches This Month"
-        value={stats.matchesThisMonth}
-        icon={ClipboardList}
-        description="Completed this month"
+        title="Active Drivers"
+        value={stats.activeDrivers}
+        icon={Users}
+        description="Available for shifts"
       />
 
       <StatsCard
-        title="Upcoming Matches"
-        value={stats.upcomingMatchesCount}
+        title="Shifts This Week"
+        value={stats.scheduledShiftsThisWeek}
+        icon={CalendarDays}
+        description="Scheduled assignments"
+      />
+
+      <StatsCard
+        title="Total Vehicles"
+        value={stats.totalVehicles}
+        icon={Truck}
+        description="In fleet"
+      />
+
+      <StatsCard
+        title="Upcoming Rosters"
+        value={stats.upcomingRosters}
         icon={Calendar}
-        description="Scheduled matches"
-      />
-
-      <StatsCard
-        title="Recent Avg Rating"
-        value={
-          stats.recentAvgRating !== null
-            ? stats.recentAvgRating.toFixed(1)
-            : "N/A"
-        }
-        icon={Star}
-        description="Last 30 days"
-      />
-
-      <StatsCard
-        title="Total Cards"
-        value={stats.totalCardsLast30Days}
-        icon={ShieldAlert}
-        description="Last 30 days"
+        description="Published rosters"
       />
     </div>
   )

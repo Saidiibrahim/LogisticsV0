@@ -15,8 +15,8 @@ interface QuickAction {
 const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: Plus,
-    label: "Schedule Match",
-    href: "/matches/create",
+    label: "Create Roster",
+    href: "/calendar",
     variant: "default",
   },
   {
@@ -42,7 +42,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 /**
  * Quick actions card component for dashboard navigation.
  *
- * Provides one-click access to common referee tasks and features.
+ * Provides one-click access to common logistics and driver management tasks.
  *
  * @example
  * ```tsx

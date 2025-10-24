@@ -1,36 +1,98 @@
-# Open in v0
+# CourierRun - Logistics Management Platform
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/saidiibrahims-projects/v0-open-in-v0)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/6kgAfYS930w)
+A comprehensive logistics management application built with Next.js 15, Supabase, and modern web technologies.
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+CourierRun is a logistics-focused application designed to streamline driver roster management, delivery tracking, and fleet operations. Built with performance and scalability in mind, it provides real-time updates and notifications for efficient logistics coordination.
 
-## Deployment
+## Features
 
-Your project is live at:
+- **Weekly Roster Management**: Create, publish, and manage driver schedules with ease
+- **Driver Assignments**: Assign drivers to shifts and vehicles with automatic conflict detection
+- **Email Notifications**: Automated notifications via Resend for roster updates and changes
+- **Real-time Calendar**: Visual calendar interface for managing shifts and deliveries
+- **Fleet Management**: Track vehicles and driver assignments
+- **Multi-tenant Support**: Organization-level data isolation with Row Level Security (RLS)
+- **AI Chat Assistant**: Get insights on delivery patterns and roster planning
 
-**[https://vercel.com/saidiibrahims-projects/v0-open-in-v0](https://vercel.com/saidiibrahims-projects/v0-open-in-v0)**
+## Tech Stack
 
-## Build your app
+- **Framework**: Next.js 15 with React 19
+- **Authentication**: Supabase Auth
+- **Database**: PostgreSQL via Supabase
+- **Styling**: Tailwind CSS 4
+- **UI Components**: shadcn/ui (Radix UI primitives)
+- **State Management**: Zustand
+- **Email**: Resend
+- **AI**: OpenAI integration for chat features
+- **Package Manager**: pnpm
 
-Continue building your app on:
+## Getting Started
 
-**[https://v0.app/chat/projects/6kgAfYS930w](https://v0.app/chat/projects/6kgAfYS930w)**
+### Prerequisites
 
-## How It Works
+- Node.js 18+ and pnpm installed
+- Supabase account and project
+- Resend API key (for email notifications)
+- OpenAI API key (for chat features)
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### Installation
 
-## Testing
+1. Clone the repository:
 
-- Run `pnpm test` for the interactive Vitest runner and `pnpm test:watch` during TDD.
-- Use `pnpm test:coverage` to generate coverage summaries before shipping significant logic changes.
-- Read `docs/testing.md` for full guidance, available mocks, and recommended workflows.
+```bash
+git clone <repository-url>
+cd LogisticsV0
+```
+
+2. Install dependencies:
+
+```bash
+pnpm install
+```
+
+3. Set up environment variables:
+   Create a `.env.local` file in the root directory (see `.env.example` for reference):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your_supabase_anon_key
+RESEND_API_KEY=your_resend_api_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+4. Run the development server:
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+## Available Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm lint` - Run Ultracite linter (check only)
+- `pnpm lint:fix` - Run Ultracite linter and apply fixes
+- `pnpm format` - Format and fix code with Ultracite
+- `pnpm type-check` - Check for TypeScript type errors
+- `pnpm test` - Run tests with Vitest
+- `pnpm test:coverage` - Generate test coverage reports
+
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run `pnpm lint` and `pnpm type-check`
+4. Submit a pull request
+
+## License
+
+Proprietary - All rights reserved
+
+Test auth:
+testuser@logisticsv0.com
+Password123!

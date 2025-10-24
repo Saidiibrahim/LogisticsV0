@@ -12,7 +12,7 @@ import { useCalendarStore } from "@/lib/stores/calendar-store"
 import {
   type CalendarEvent,
   eventTypeColors,
-  isMatchEvent,
+  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -47,9 +47,9 @@ export function TimelineView({ onEventClick }: TimelineViewProps) {
       const matchesSearch =
         event.title.toLowerCase().includes(query) ||
         event.location?.toLowerCase().includes(query) ||
-        (isMatchEvent(event) &&
-          event.teams?.home.toLowerCase().includes(query)) ||
-        (isMatchEvent(event) && event.teams?.away.toLowerCase().includes(query))
+        (isShiftEvent(event) &&
+          event.driver_name?.toLowerCase().includes(query)) ||
+        (isShiftEvent(event) && event.route_name?.toLowerCase().includes(query))
       if (!matchesSearch) {
         return false
       }
