@@ -1,8 +1,8 @@
 "use server"
 
+import { format, parseISO } from "date-fns"
 import { Resend } from "resend"
 import type { RosterAssignment } from "@/lib/types/roster"
-import { format, parseISO } from "date-fns"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -39,7 +39,7 @@ export async function sendRosterNotification(
     const weekStartFormatted = format(parseISO(weekStart), "MMMM d, yyyy")
 
     const { data, error } = await resend.emails.send({
-      from: "CourierRun <noreply@courierrun.com>",
+      from: "Route Calendar <refprep@ibrahimscode.dev>",
       to: [driverEmail],
       subject: `Your Driver Schedule - Week of ${weekStartFormatted}`,
       html: `
@@ -70,14 +70,16 @@ export async function sendRosterNotification(
 
       <div class="date-list">
         <h3 style="margin-top: 0;">Your Assigned Days:</h3>
-        ${assignments.map((date) => {
-          try {
-            const formatted = format(parseISO(date), "EEEE, MMMM d")
-            return `<div class="date-item">📅 ${formatted}</div>`
-          } catch {
-            return `<div class="date-item">📅 ${date}</div>`
-          }
-        }).join("")}
+        ${assignments
+          .map((date) => {
+            try {
+              const formatted = format(parseISO(date), "EEEE, MMMM d")
+              return `<div class="date-item">📅 ${formatted}</div>`
+            } catch {
+              return `<div class="date-item">📅 ${date}</div>`
+            }
+          })
+          .join("")}
       </div>
 
       <p>Please review your schedule and contact your team leader if you have any questions or concerns.</p>
@@ -130,7 +132,7 @@ export async function sendRosterChangeNotification(
     const weekStartFormatted = format(parseISO(weekStart), "MMMM d, yyyy")
 
     const { data, error } = await resend.emails.send({
-      from: "CourierRun <noreply@courierrun.com>",
+      from: "Route Calendar <refprep@ibrahimscode.dev>",
       to: [driverEmail],
       subject: `Schedule Update - Week of ${weekStartFormatted}`,
       html: `
@@ -152,7 +154,7 @@ export async function sendRosterChangeNotification(
   <div class="container">
     <div class="header">
       <h1 style="margin: 0;">⚠️ Schedule Change</h1>
-      <p style="margin: 10px 0 0 0;">CourierRun</p>
+      <p style="margin: 10px 0 0 0;">Route Calendar</p>
     </div>
     <div class="content">
       <h2>Hello ${driverName},</h2>
@@ -165,20 +167,22 @@ export async function sendRosterChangeNotification(
 
       <div class="date-list">
         <h3 style="margin-top: 0;">Changed Dates:</h3>
-        ${changedDates.map((date) => {
-          try {
-            const formatted = format(parseISO(date), "EEEE, MMMM d")
-            return `<div style="padding: 10px 0;">🔄 ${formatted}</div>`
-          } catch {
-            return `<div style="padding: 10px 0;">🔄 ${date}</div>`
-          }
-        }).join("")}
+        ${changedDates
+          .map((date) => {
+            try {
+              const formatted = format(parseISO(date), "EEEE, MMMM d")
+              return `<div style="padding: 10px 0;">🔄 ${formatted}</div>`
+            } catch {
+              return `<div style="padding: 10px 0;">🔄 ${date}</div>`
+            }
+          })
+          .join("")}
       </div>
 
-      <p>Please review the updated schedule in CourierRun and contact your team leader if you have any questions.</p>
+      <p>Please review the updated schedule in Route Calendar and contact your team leader if you have any questions.</p>
 
       <div class="footer">
-        <p>This is an automated notification from CourierRun.</p>
+        <p>This is an automated notification from Route Calendar.</p>
         <p>Please do not reply to this email.</p>
       </div>
     </div>
@@ -223,7 +227,7 @@ export async function sendWeeklyRosterSummary(
     const weekStartFormatted = format(parseISO(weekStart), "MMMM d, yyyy")
 
     const { data, error } = await resend.emails.send({
-      from: "CourierRun <noreply@courierrun.com>",
+      from: "Route Calendar <refprep@ibrahimscode.dev>",
       to: [recipientEmail],
       subject: `Weekly Roster Published - Week of ${weekStartFormatted}`,
       html: `
@@ -246,7 +250,7 @@ export async function sendWeeklyRosterSummary(
   <div class="container">
     <div class="header">
       <h1 style="margin: 0;">✅ Roster Published</h1>
-      <p style="margin: 10px 0 0 0;">CourierRun</p>
+      <p style="margin: 10px 0 0 0;">Route Calendar</p>
     </div>
     <div class="content">
       <h2>Weekly Roster Summary</h2>
@@ -266,7 +270,7 @@ export async function sendWeeklyRosterSummary(
       <p>All scheduled drivers have received their weekly assignments via email.</p>
 
       <div class="footer">
-        <p>This is an automated notification from CourierRun.</p>
+        <p>This is an automated notification from Route Calendar.</p>
         <p>Please do not reply to this email.</p>
       </div>
     </div>

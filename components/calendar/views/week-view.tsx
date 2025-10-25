@@ -12,11 +12,7 @@ import {
   startOfWeek,
 } from "date-fns"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
-import {
-  type CalendarEvent,
-  eventTypeColors,
-  isShiftEvent,
-} from "@/lib/types/calendar"
+import { type CalendarEvent, eventTypeColors } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
 /**
@@ -55,10 +51,10 @@ export function WeekView({ onEventClick }: WeekViewProps) {
       const query = filters.searchQuery.toLowerCase()
       const matchesSearch =
         event.title.toLowerCase().includes(query) ||
-        event.location?.toLowerCase().includes(query) ||
-        (isShiftEvent(event) &&
-          event.driver_name?.toLowerCase().includes(query)) ||
-        (isShiftEvent(event) && event.route_name?.toLowerCase().includes(query))
+        event.location_name?.toLowerCase().includes(query) ||
+        event.location_address?.toLowerCase().includes(query) ||
+        event.driver_name?.toLowerCase().includes(query) ||
+        event.order_number?.toLowerCase().includes(query)
       if (!matchesSearch) {
         return false
       }
@@ -68,14 +64,14 @@ export function WeekView({ onEventClick }: WeekViewProps) {
 
   // Get events for a specific day
   const getEventsForDay = (day: Date) => {
-    return filteredEvents.filter((event) => isSameDay(event.start, day))
+    return filteredEvents.filter((event) => isSameDay(event.start_time, day))
   }
 
   // Calculate event position and height
   const getEventStyle = (event: CalendarEvent) => {
-    const startHour = getHours(event.start)
-    const startMinute = event.start.getMinutes()
-    const duration = differenceInMinutes(event.end, event.start)
+    const startHour = getHours(event.start_time)
+    const startMinute = event.start_time.getMinutes()
+    const duration = differenceInMinutes(event.end_time, event.start_time)
 
     // Each hour is 60px
     const hourHeight = 60
@@ -166,12 +162,12 @@ export function WeekView({ onEventClick }: WeekViewProps) {
                       type="button"
                     >
                       <div className="font-semibold text-white">
-                        {format(event.start, "h:mm a")}
+                        {format(event.start_time, "h:mm a")}
                       </div>
                       <div className="truncate text-white">{event.title}</div>
-                      {event.location && (
+                      {(event.location_name || event.location_address) && (
                         <div className="truncate text-white/80">
-                          {event.location}
+                          {event.location_name || event.location_address}
                         </div>
                       )}
                     </button>

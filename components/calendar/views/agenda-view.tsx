@@ -9,7 +9,6 @@ import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
-  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -39,17 +38,17 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
         const query = filters.searchQuery.toLowerCase()
         const matchesSearch =
           event.title.toLowerCase().includes(query) ||
-          event.location?.toLowerCase().includes(query) ||
-          (isShiftEvent(event) &&
-            (event.driver_name?.toLowerCase().includes(query) ||
-              event.route_name?.toLowerCase().includes(query)))
+          event.location_name?.toLowerCase().includes(query) ||
+          event.location_address?.toLowerCase().includes(query) ||
+          event.driver_name?.toLowerCase().includes(query) ||
+          event.order_number?.toLowerCase().includes(query)
         if (!matchesSearch) {
           return false
         }
       }
       return true
     })
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .sort((a, b) => a.start_time.getTime() - b.start_time.getTime())
 
   return (
     <div className="h-full overflow-auto">
@@ -81,13 +80,13 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
                       {/* Date column */}
                       <div className="flex w-24 flex-col items-center gap-1 border-r pr-6">
                         <div className="font-bold text-2xl text-primary">
-                          {format(event.start, "d")}
+                          {format(event.start_time, "d")}
                         </div>
                         <div className="text-muted-foreground text-sm uppercase">
-                          {format(event.start, "MMM")}
+                          {format(event.start_time, "MMM")}
                         </div>
                         <div className="text-muted-foreground text-xs">
-                          {format(event.start, "yyyy")}
+                          {format(event.start_time, "yyyy")}
                         </div>
                       </div>
 
@@ -128,34 +127,34 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
                           <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <Clock className="size-4 shrink-0" />
                             <span>
-                              {format(event.start, "h:mm a")} -{" "}
-                              {format(event.end, "h:mm a")}
+                              {format(event.start_time, "h:mm a")} -{" "}
+                              {format(event.end_time, "h:mm a")}
                             </span>
                           </div>
 
                           {/* Location */}
-                          {event.location && (
+                          {(event.location_name || event.location_address) && (
                             <div className="flex items-center gap-2 text-muted-foreground text-sm">
                               <MapPin className="size-4 shrink-0" />
-                              <span>{event.location}</span>
+                              <span>{event.location_name || event.location_address}</span>
                             </div>
                           )}
 
-                          {/* Driver & Route */}
-                          {isShiftEvent(event) && (event.driver_name || event.route_name) && (
+                          {/* Driver */}
+                          {event.driver_name && (
                             <div className="flex items-center gap-2 text-muted-foreground text-sm sm:col-span-2">
                               <Users className="size-4 shrink-0" />
                               <span>
-                                {event.driver_name}{event.driver_name && event.route_name ? ' - ' : ''}{event.route_name}
+                                Driver: {event.driver_name}
                               </span>
                             </div>
                           )}
                         </div>
 
-                        {/* Notes */}
-                        {event.notes && (
+                        {/* Description */}
+                        {event.description && (
                           <p className="rounded-md bg-muted p-3 text-muted-foreground text-sm">
-                            {event.notes}
+                            {event.description}
                           </p>
                         )}
                       </div>

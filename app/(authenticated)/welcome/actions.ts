@@ -5,7 +5,7 @@ import type {
   DashboardData,
   DashboardQuickStats,
   DashboardRecentRoster,
-  DashboardUpcomingShift,
+  DashboardUpcomingAssignment,
   GetDashboardDataOptions,
 } from "@/lib/types/dashboard"
 import { getErrorMessage } from "@/lib/utils/errors"
@@ -25,7 +25,7 @@ function getCurrentWeekStart(): string {
 
 /**
  * Fetch comprehensive dashboard data including quick stats,
- * upcoming driver shifts, and recent roster activity.
+ * upcoming driver assignments, and recent roster activity.
  *
  * @param options - Configuration for data fetching.
  * @returns Dashboard data or error.
@@ -116,20 +116,20 @@ export async function getDashboardData(
     const totalVehicles = vehiclesResult.count ?? 0
 
     // Count total assignments for this week across all rosters
-    let scheduledShiftsThisWeek = 0
+    let scheduledAssignmentsThisWeek = 0
     for (const roster of weekRosterResult.data ?? []) {
       const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
-      scheduledShiftsThisWeek += assignments.length
+      scheduledAssignmentsThisWeek += assignments.length
     }
 
     const quickStats: DashboardQuickStats = {
       activeDrivers,
-      scheduledShiftsThisWeek,
+      scheduledAssignmentsThisWeek,
       totalVehicles,
       upcomingRosters: weekRosterResult.data?.length ?? 0,
     }
 
-    // Fetch upcoming shifts for next few days from roster assignments
+    // Fetch upcoming assignments for next few days from roster assignments
     const nextWeekEnd = format(addDays(new Date(), 7), "yyyy-MM-dd")
 
     const { data: upcomingRostersData, error: upcomingError } = await supabase
@@ -141,15 +141,15 @@ export async function getDashboardData(
       .order("week_start_date", { ascending: true })
 
     if (upcomingError) {
-      console.error("[dashboard] upcomingShifts error:", upcomingError)
+      console.error("[dashboard] upcomingAssignments error:", upcomingError)
     }
 
     // Flatten assignments and filter for upcoming dates
-    const upcomingShifts: DashboardUpcomingShift[] = []
+    const upcomingAssignments: DashboardUpcomingAssignment[] = []
     for (const roster of upcomingRostersData ?? []) {
       const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
       for (const assignment of assignments) {
-        if (assignment.date >= today && upcomingShifts.length < upcomingLimit) {
+        if (assignment.date >= today && upcomingAssignments.length < upcomingLimit) {
           // Fetch driver details
           const { data: driver } = await supabase
             .from("users")
@@ -160,7 +160,7 @@ export async function getDashboardData(
           if (driver) {
             // Cast vehicles to the correct type (Supabase returns single object for foreign key, not array)
             const vehicle = driver.vehicles as any
-            upcomingShifts.push({
+            upcomingAssignments.push({
               id: `${assignment.date}-${assignment.driverId}`,
               date: assignment.date,
               driverName: driver.full_name ?? "Unknown Driver",
@@ -176,8 +176,8 @@ export async function getDashboardData(
     }
 
     // Sort by date and limit
-    upcomingShifts.sort((a, b) => a.date.localeCompare(b.date))
-    upcomingShifts.splice(upcomingLimit)
+    upcomingAssignments.sort((a, b) => a.date.localeCompare(b.date))
+    upcomingAssignments.splice(upcomingLimit)
 
     // Fetch recent rosters
     const { data: recentRostersData, error: recentError } = await supabase
@@ -203,13 +203,13 @@ export async function getDashboardData(
 
     const dashboardData: DashboardData = {
       quickStats,
-      upcomingShifts,
+      upcomingAssignments,
       recentRosters,
     }
 
     console.log("[dashboard] Dashboard data prepared", {
       quickStats,
-      upcomingShiftsCount: upcomingShifts.length,
+      upcomingAssignmentsCount: upcomingAssignments.length,
       recentRostersCount: recentRosters.length,
     })
 

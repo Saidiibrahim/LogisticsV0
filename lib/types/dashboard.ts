@@ -3,15 +3,15 @@
  */
 export interface DashboardQuickStats {
   activeDrivers: number
-  scheduledShiftsThisWeek: number
+  scheduledAssignmentsThisWeek: number
   totalVehicles: number
   upcomingRosters: number
 }
 
 /**
- * Compact representation of an upcoming driver shift/roster assignment.
+ * Compact representation of an upcoming driver roster assignment.
  */
-export interface DashboardUpcomingShift {
+export interface DashboardUpcomingAssignment {
   id: string
   date: string
   driverName: string
@@ -34,7 +34,7 @@ export interface DashboardRecentRoster {
  */
 export interface DashboardData {
   quickStats: DashboardQuickStats
-  upcomingShifts: DashboardUpcomingShift[]
+  upcomingAssignments: DashboardUpcomingAssignment[]
   recentRosters: DashboardRecentRoster[]
 }
 

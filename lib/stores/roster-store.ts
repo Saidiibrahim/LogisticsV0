@@ -90,6 +90,7 @@ export const useRosterStore = create<RosterState>()(
             hasUnsavedChanges: false,
           })
         }
+        return res
       },
 
       updateAssignment(dateStr, driverId) {

@@ -16,11 +16,7 @@ import {
   startOfWeek,
 } from "date-fns"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
-import {
-  type CalendarEvent,
-  eventTypeColors,
-  isShiftEvent,
-} from "@/lib/types/calendar"
+import { type CalendarEvent, eventTypeColors } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
 /**
@@ -89,17 +85,12 @@ export function MonthView({ onEventClick }: MonthViewProps) {
     // Search filter
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase()
-      let matchesSearch =
+      const matchesSearch =
         event.title.toLowerCase().includes(query) ||
-        event.location?.toLowerCase().includes(query)
-
-      // Shift-specific search
-      if (isShiftEvent(event)) {
-        matchesSearch =
-          matchesSearch ||
-          event.driver_name?.toLowerCase().includes(query) ||
-          event.route_name?.toLowerCase().includes(query)
-      }
+        event.location_name?.toLowerCase().includes(query) ||
+        event.location_address?.toLowerCase().includes(query) ||
+        event.driver_name?.toLowerCase().includes(query) ||
+        event.order_number?.toLowerCase().includes(query)
 
       if (!matchesSearch) {
         return false
@@ -112,8 +103,8 @@ export function MonthView({ onEventClick }: MonthViewProps) {
   // Get events for a specific day
   const getEventsForDay = (day: Date) => {
     return filteredEvents.filter((event) => {
-      const eventStart = startOfDay(event.start)
-      const eventEnd = endOfDay(event.end)
+      const eventStart = startOfDay(event.start_time)
+      const eventEnd = endOfDay(event.end_time)
       const dayStart = startOfDay(day)
       const dayEnd = endOfDay(day)
 

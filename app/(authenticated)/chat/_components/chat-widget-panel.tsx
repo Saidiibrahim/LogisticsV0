@@ -15,8 +15,8 @@
  * - Fallback UI for unsupported widget types
  *
  * **Supported Widgets:**
- * - Calendar: Upcoming shifts and training sessions
- * - Training Summary: Training workload and session details
+ * - Calendar: Upcoming deliveries and pickup events
+ * - Driver Performance: Performance metrics and recent delivery history
  *
  * @module app/(authenticated)/chat/_components/chat-widget-panel
  */
@@ -51,13 +51,13 @@ const CalendarWidget = dynamic(
 
 
 /**
- * Training summary widget - dynamically imported for code-splitting.
+ * Driver performance widget - dynamically imported for code-splitting.
  * Shows loading skeleton while component loads.
  */
-const TrainingSummaryWidget = dynamic(
+const DriverPerformanceWidget = dynamic(
   () =>
-    import("../_widgets/training-summary-widget").then(
-      (mod) => mod.TrainingSummaryWidget
+    import("../_widgets/driver-performance-widget").then(
+      (mod) => mod.DriverPerformanceWidget
     ),
   { loading: () => <WidgetSkeleton /> }
 )
@@ -94,8 +94,8 @@ export function ChatWidgetPanel({ widget }: ChatWidgetPanelProps) {
     switch (widget.type) {
       case "calendar":
         return <CalendarWidget data={widget.data} />
-      case "training-summary":
-        return <TrainingSummaryWidget data={widget.data} />
+      case "driver-performance":
+        return <DriverPerformanceWidget data={widget.data} />
       default:
         return (
           <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">

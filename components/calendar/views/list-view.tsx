@@ -8,7 +8,6 @@ import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
-  isShiftEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -38,22 +37,22 @@ export function ListView({ onEventClick }: ListViewProps) {
         const query = filters.searchQuery.toLowerCase()
         const matchesSearch =
           event.title.toLowerCase().includes(query) ||
-          event.location?.toLowerCase().includes(query) ||
-          (isShiftEvent(event) &&
-            (event.driver_name?.toLowerCase().includes(query) ||
-              event.route_name?.toLowerCase().includes(query)))
+          event.location_name?.toLowerCase().includes(query) ||
+          event.location_address?.toLowerCase().includes(query) ||
+          event.driver_name?.toLowerCase().includes(query) ||
+          event.order_number?.toLowerCase().includes(query)
         if (!matchesSearch) {
           return false
         }
       }
       return true
     })
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .sort((a, b) => a.start_time.getTime() - b.start_time.getTime())
 
   // Group events by date
   const groupedEvents = filteredEvents.reduce(
     (acc, event) => {
-      const dateKey = format(event.start, "yyyy-MM-dd")
+      const dateKey = format(event.start_time, "yyyy-MM-dd")
       if (!acc[dateKey]) {
         acc[dateKey] = []
       }
@@ -116,8 +115,8 @@ export function ListView({ onEventClick }: ListViewProps) {
                                 <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                                   <Clock className="size-4" />
                                   <span>
-                                    {format(event.start, "h:mm a")} -{" "}
-                                    {format(event.end, "h:mm a")}
+                                    {format(event.start_time, "h:mm a")} -{" "}
+                                    {format(event.end_time, "h:mm a")}
                                   </span>
                                 </div>
                                 <div
@@ -132,25 +131,25 @@ export function ListView({ onEventClick }: ListViewProps) {
                                 {event.title}
                               </h4>
 
-                              {/* Driver & Route */}
-                              {isShiftEvent(event) && (event.driver_name || event.route_name) && (
+                              {/* Driver */}
+                              {event.driver_name && (
                                 <div className="text-muted-foreground text-sm">
-                                  {event.driver_name}{event.driver_name && event.route_name ? ' - ' : ''}{event.route_name}
+                                  Driver: {event.driver_name}
                                 </div>
                               )}
 
                               {/* Location */}
-                              {event.location && (
+                              {(event.location_name || event.location_address) && (
                                 <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                                   <MapPin className="size-4" />
-                                  <span>{event.location}</span>
+                                  <span>{event.location_name || event.location_address}</span>
                                 </div>
                               )}
 
-                              {/* Notes */}
-                              {event.notes && (
+                              {/* Description */}
+                              {event.description && (
                                 <p className="text-muted-foreground text-sm">
-                                  {event.notes}
+                                  {event.description}
                                 </p>
                               )}
                             </div>

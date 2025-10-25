@@ -9,11 +9,7 @@ import {
   startOfWeek,
 } from "date-fns"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
-import {
-  type CalendarEvent,
-  eventTypeColors,
-  isShiftEvent,
-} from "@/lib/types/calendar"
+import { type CalendarEvent, eventTypeColors } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
 /**
@@ -46,10 +42,10 @@ export function TimelineView({ onEventClick }: TimelineViewProps) {
       const query = filters.searchQuery.toLowerCase()
       const matchesSearch =
         event.title.toLowerCase().includes(query) ||
-        event.location?.toLowerCase().includes(query) ||
-        (isShiftEvent(event) &&
-          event.driver_name?.toLowerCase().includes(query)) ||
-        (isShiftEvent(event) && event.route_name?.toLowerCase().includes(query))
+        event.location_name?.toLowerCase().includes(query) ||
+        event.location_address?.toLowerCase().includes(query) ||
+        event.driver_name?.toLowerCase().includes(query) ||
+        event.order_number?.toLowerCase().includes(query)
       if (!matchesSearch) {
         return false
       }
@@ -63,7 +59,7 @@ export function TimelineView({ onEventClick }: TimelineViewProps) {
   // Get events for a specific type and day
   const getEventsForTypeAndDay = (type: string, day: Date) => {
     return filteredEvents.filter(
-      (event) => event.type === type && isSameDay(event.start, day)
+      (event) => event.type === type && isSameDay(event.start_time, day)
     )
   }
 
@@ -143,7 +139,7 @@ export function TimelineView({ onEventClick }: TimelineViewProps) {
                               type="button"
                             >
                               <div className="font-medium text-white">
-                                {format(event.start, "h:mm a")}
+                                {format(event.start_time, "h:mm a")}
                               </div>
                               <div className="truncate text-white">
                                 {event.title}

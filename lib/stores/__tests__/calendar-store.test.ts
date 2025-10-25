@@ -15,25 +15,25 @@ describe("useCalendarStore", () => {
   })
 
   it("manages events and filters", () => {
-    const event = createMatchEvent({ id: "match-1" })
+    const event = createMatchEvent({ id: "delivery-1" })
 
     act(() => {
       const store = useCalendarStore.getState()
       // Create -> update -> toggle filters to document main flows.
       store.addEvent(event)
-      store.updateEvent("match-1", { title: "Updated" })
-      store.toggleEventType("match")
+      store.updateEvent("delivery-1", { title: "Updated" })
+      store.toggleEventType("delivery")
       store.toggleEventStatus("scheduled")
-      store.setSearchQuery("derby")
+      store.setSearchQuery("depot")
     })
 
     const state = useCalendarStore.getState()
 
     expect(state.events).toHaveLength(1)
     expect(state.events[0]?.title).toBe("Updated")
-    expect(state.filters.eventTypes).not.toContain("match")
+    expect(state.filters.eventTypes).not.toContain("delivery")
     expect(state.filters.eventStatuses).not.toContain("scheduled")
-    expect(state.filters.searchQuery).toBe("derby")
+    expect(state.filters.searchQuery).toBe("depot")
   })
 
   it("resets to initial state", () => {
@@ -48,6 +48,6 @@ describe("useCalendarStore", () => {
     const state = useCalendarStore.getState()
     expect(state.currentView).toBe("month")
     expect(state.events).toEqual([])
-    expect(state.filters.eventTypes).toEqual(["match", "training", "coaching"])
+    expect(state.filters.eventTypes).toEqual(["delivery", "pickup", "meeting", "break", "maintenance", "collection", "retail"])
   })
 })

@@ -93,6 +93,11 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 Proprietary - All rights reserved
 
-Test auth:
+**Authentication Users:** Use the following test users for authentication:
 testuser@logisticsv0.com
-Password123!
+
+- Driver: `driver@example.com`
+- Team Leader: `team-leader@example.com`
+- Customer Support: `customer-support@example.com`
+- Retail Officer: `retail-officer@example.com`
+- Password: `Password123!` (all users)

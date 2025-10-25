@@ -4,9 +4,7 @@ import { format } from "date-fns"
 import {
   Calendar,
   Clock,
-  Dumbbell,
   FileText,
-  GraduationCap,
   Loader2,
   MapPin,
   Trash2,
@@ -39,9 +37,6 @@ import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
-  isCoachingEvent,
-  isShiftEvent,
-  isTrainingEvent,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 
@@ -72,28 +67,29 @@ export function EventDetailsDialog({
   const typeColor = eventTypeColors[event.type]
   const statusStyle = eventStatusStyles[event.status]
 
-  // Choose a contextual icon based on the event type so the dialog feels
-  // consistent with the view cards
+  // Choose a contextual icon based on the event type
   const getTypeIcon = () => {
-    if (isShiftEvent(event)) return <Trophy className="size-5" />
-    if (isTrainingEvent(event)) return <Dumbbell className="size-5" />
-    if (isCoachingEvent(event)) return <GraduationCap className="size-5" />
-    return null
+    switch (event.type) {
+      case "delivery":
+      case "pickup":
+        return <Trophy className="size-5" />
+      case "meeting":
+        return <Users className="size-5" />
+      case "maintenance":
+        return <FileText className="size-5" />
+      case "break":
+        return <Clock className="size-5" />
+      case "collection":
+      case "retail":
+        return <MapPin className="size-5" />
+      default:
+        return null
+    }
   }
 
   const handleDelete = () => {
     startTransition(async () => {
-      // Map to the specific table record the event originated from
-      let eventId = event.id
-      if (isShiftEvent(event)) {
-        eventId = event.shift_id || event.id
-      } else if (isTrainingEvent(event)) {
-        eventId = event.workout_session_id
-      } else if (isCoachingEvent(event)) {
-        eventId = event.coaching_session_id
-      }
-
-      const result = await deleteEvent(event.type, eventId)
+      const result = await deleteEvent(event.id)
       if (result.success) {
         setShowDeleteDialog(false)
         onOpenChange(false)
@@ -123,11 +119,7 @@ export function EventDetailsDialog({
                 <Badge variant="outline" className="capitalize">
                   {getTypeIcon()}
                   <span className="ml-1">
-                    {event.type === "shift"
-                      ? "Shift"
-                      : event.type === "training"
-                        ? "Training"
-                        : "Coaching"}
+                    {event.type.replace("-", " ")}
                   </span>
                 </Badge>
               </div>
@@ -141,7 +133,7 @@ export function EventDetailsDialog({
                 <Calendar className="size-5 text-muted-foreground" />
                 <div>
                   <div className="font-medium">
-                    {format(event.start, "EEEE, MMMM d, yyyy")}
+                    {format(event.start_time, "EEEE, MMMM d, yyyy")}
                   </div>
                 </div>
               </div>
@@ -150,13 +142,13 @@ export function EventDetailsDialog({
                 <Clock className="size-5 text-muted-foreground" />
                 <div>
                   <div className="font-medium">
-                    {format(event.start, "h:mm a")} -{" "}
-                    {format(event.end, "h:mm a")}
+                    {format(event.start_time, "h:mm a")} -{" "}
+                    {format(event.end_time, "h:mm a")}
                   </div>
                   <div className="text-muted-foreground text-sm">
                     Duration:{" "}
                     {Math.round(
-                      (event.end.getTime() - event.start.getTime()) /
+                      (event.end_time.getTime() - event.start_time.getTime()) /
                         (1000 * 60)
                     )}{" "}
                     minutes
@@ -168,14 +160,37 @@ export function EventDetailsDialog({
             <Separator />
 
             {/* Location */}
-            {event.location && (
+            {(event.location_name || event.location_address) && (
               <>
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 size-5 text-muted-foreground" />
                   <div>
                     <div className="font-medium">Location</div>
+                    {event.location_name && (
+                      <div className="font-medium text-sm">
+                        {event.location_name}
+                      </div>
+                    )}
+                    {event.location_address && (
+                      <div className="text-muted-foreground text-sm">
+                        {event.location_address}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Driver */}
+            {event.driver_name && (
+              <>
+                <div className="flex items-start gap-3">
+                  <User className="mt-0.5 size-5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium">Assigned Driver</div>
                     <div className="text-muted-foreground text-sm">
-                      {event.location}
+                      {event.driver_name}
                     </div>
                   </div>
                 </div>
@@ -183,128 +198,58 @@ export function EventDetailsDialog({
               </>
             )}
 
-            {/* Shift-specific details */}
-            {isShiftEvent(event) && (
-              <>
-                {event.driver_name && (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <Users className="mt-0.5 size-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Driver</div>
-                        <div className="text-muted-foreground text-sm">
-                          {event.driver_name}
-                        </div>
-                      </div>
-                    </div>
-                    <Separator />
-                  </>
-                )}
-                {event.vehicle_id && (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <Trophy className="mt-0.5 size-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Vehicle</div>
-                        <div className="text-muted-foreground text-sm">
-                          {event.vehicle_id}
-                        </div>
-                      </div>
-                    </div>
-                    <Separator />
-                  </>
-                )}
-                {event.route_name && (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <MapPin className="mt-0.5 size-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Route</div>
-                        <div className="text-muted-foreground text-sm">
-                          {event.route_name}
-                        </div>
-                      </div>
-                    </div>
-                    <Separator />
-                  </>
-                )}
-              </>
-            )}
-
-            {/* Training-specific details */}
-            {isTrainingEvent(event) && (
+            {/* Order Information */}
+            {(event.order_type || event.order_number) && (
               <>
                 <div className="flex items-start gap-3">
-                  <Dumbbell className="mt-0.5 size-5 text-muted-foreground" />
+                  <FileText className="mt-0.5 size-5 text-muted-foreground" />
                   <div>
-                    <div className="font-medium">Training Type</div>
-                    <div className="text-muted-foreground text-sm capitalize">
-                      {event.trainingKind.replace(/([A-Z])/g, " $1").trim()}
-                    </div>
+                    <div className="font-medium">Order Information</div>
+                    {event.order_type && (
+                      <div className="text-sm capitalize">
+                        Type: {event.order_type.replace(/_/g, " ")}
+                      </div>
+                    )}
+                    {event.order_number && (
+                      <div className="text-muted-foreground text-sm">
+                        Order #: {event.order_number}
+                      </div>
+                    )}
                   </div>
                 </div>
-                {event.perceived_exertion && (
-                  <div className="flex items-start gap-3">
-                    <FileText className="mt-0.5 size-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">Perceived Exertion</div>
-                      <div className="text-muted-foreground text-sm">
-                        {event.perceived_exertion}/10
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <Separator />
               </>
             )}
 
-            {/* Coaching-specific details */}
-            {isCoachingEvent(event) && (
+            {/* Tags */}
+            {event.tags && event.tags.length > 0 && (
               <>
                 <div className="flex items-start gap-3">
-                  <GraduationCap className="mt-0.5 size-5 text-muted-foreground" />
+                  <FileText className="mt-0.5 size-5 text-muted-foreground" />
                   <div>
-                    <div className="font-medium">Session Type</div>
-                    <div className="text-muted-foreground text-sm capitalize">
-                      {event.sessionType.replace(/_/g, " ")}
+                    <div className="font-medium">Tags</div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {event.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 </div>
-                {event.facilitator && (
-                  <div className="flex items-start gap-3">
-                    <User className="mt-0.5 size-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">Facilitator</div>
-                      <div className="text-muted-foreground text-sm">
-                        {event.facilitator}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {event.max_attendees && (
-                  <div className="flex items-start gap-3">
-                    <Users className="mt-0.5 size-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">Max Attendees</div>
-                      <div className="text-muted-foreground text-sm">
-                        {event.max_attendees}
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <Separator />
               </>
             )}
 
-            {/* Notes (common to all events) */}
-            {event.notes && (
+            {/* Description */}
+            {event.description && (
               <>
                 <div className="flex items-start gap-3">
                   <FileText className="mt-0.5 size-5 text-muted-foreground" />
                   <div className="flex-1">
-                    <div className="font-medium">Notes</div>
+                    <div className="font-medium">Description</div>
                     <p className="mt-2 whitespace-pre-wrap text-muted-foreground text-sm">
-                      {event.notes}
+                      {event.description}
                     </p>
                   </div>
                 </div>

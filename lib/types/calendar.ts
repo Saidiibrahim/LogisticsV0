@@ -1,102 +1,60 @@
 /**
  * Calendar event categories used as discriminators across the union.
+ * Matches the event_type column in the calendar_events table.
  */
-export type EventType = "shift" | "training" | "coaching"
+export type EventType =
+  | "delivery"
+  | "pickup"
+  | "meeting"
+  | "break"
+  | "maintenance"
+  | "collection"
+  | "retail"
 
 /**
  * Status options shared by all calendar event types.
+ * Matches the status column in the calendar_events table.
  */
 export type EventStatus =
-  | "scheduled" // For shifts and coaching sessions
-  | "in_progress" // For active shifts
-  | "completed" // For completed shifts
-  | "canceled" // For canceled shifts
-  | "planned" // For planned training/coaching
-  | "active" // For active training
-  | "ended" // For ended training
-  | "aborted" // For aborted training
-
+  | "scheduled" // Event is scheduled but not started
+  | "in-progress" // Event is currently active
+  | "completed" // Event has been completed
+  | "cancelled" // Event has been cancelled
 
 /**
- * Enumerates the workout kinds stored in `workout_sessions`.
+ * Calendar event interface matching the calendar_events table structure.
+ * All event types (delivery, pickup, meeting, etc.) use this single interface.
  */
-export type TrainingKind =
-  | "outdoorRun"
-  | "outdoorWalk"
-  | "indoorRun"
-  | "indoorCycle"
-  | "strength"
-  | "mobility"
-  | "driverTraining"
-  | "custom"
-
-/**
- * Coaching session formats supported by the application.
- */
-export type CoachingSessionType =
-  | "video_review"
-  | "presentation"
-  | "discussion"
-  | "workshop"
-  | "other"
-
-/**
- * Base fields shared by all calendar events, regardless of source table.
- */
-export interface BaseCalendarEvent {
+export interface CalendarEvent {
   id: string
   type: EventType
   title: string
-  start: Date
-  end: Date
+  description?: string
+  start_time: Date
+  end_time: Date
   status: EventStatus
-  location?: string
-  notes?: string
-  owner_id: string
-}
-
-/**
- * Calendar representation of driver shifts.
- */
-export interface ShiftEvent extends BaseCalendarEvent {
-  type: "shift"
+  priority: "low" | "medium" | "high" | "urgent"
+  assigned_driver_id?: string
   driver_name?: string
-  vehicle_id?: string
-  route_name?: string
-  // Reference to source table
-  shift_id?: string
+  location_name?: string
+  location_address?: string
+  location_coordinates?: {
+    lat: number
+    lng: number
+  }
+  site_id?: string
+  delivery_id?: string
+  order_type?: "sales_order" | "purchase_order" | "courier_request"
+  order_number?: string
+  day_date: Date
+  sequence_number: number
+  tags?: string[]
+  custom_fields?: Record<string, unknown>
+  organization_id: string
+  created_by: string
+  created_at: Date
+  updated_at: Date
 }
-
-/**
- * Training session pulled from the `workout_sessions` table.
- */
-export interface TrainingEvent extends BaseCalendarEvent {
-  type: "training"
-  trainingKind: TrainingKind
-  perceived_exertion?: number
-  preset_id?: string
-  metadata?: Record<string, unknown>
-  summary?: Record<string, unknown>
-  // Reference to source table
-  workout_session_id: string
-}
-
-/**
- * Coaching session sourced from the `coaching_sessions` table.
- */
-export interface CoachingEvent extends BaseCalendarEvent {
-  type: "coaching"
-  sessionType: CoachingSessionType
-  facilitator?: string
-  max_attendees?: number
-  // Reference to source table
-  coaching_session_id: string
-}
-
-/**
- * Discriminated union that describes every possible calendar event variant.
- */
-export type CalendarEvent = ShiftEvent | TrainingEvent | CoachingEvent
 
 /**
  * Store representation of calendar filtering options.
@@ -107,35 +65,17 @@ export interface CalendarFilters {
   searchQuery: string
 }
 
-// Helper type guards
-/**
- * Narrow a calendar event to the shift variant.
- */
-export function isShiftEvent(event: CalendarEvent): event is ShiftEvent {
-  return event.type === "shift"
-}
-
-/**
- * Narrow a calendar event to the training variant.
- */
-export function isTrainingEvent(event: CalendarEvent): event is TrainingEvent {
-  return event.type === "training"
-}
-
-/**
- * Narrow a calendar event to the coaching variant.
- */
-export function isCoachingEvent(event: CalendarEvent): event is CoachingEvent {
-  return event.type === "coaching"
-}
-
 /**
  * Utility map that controls the accent color for each event type.
  */
 export const eventTypeColors: Record<EventType, string> = {
-  shift: "bg-blue-500",
-  training: "bg-green-500",
-  coaching: "bg-purple-500",
+  delivery: "bg-blue-500",
+  pickup: "bg-indigo-500",
+  meeting: "bg-purple-500",
+  break: "bg-gray-500",
+  maintenance: "bg-orange-500",
+  collection: "bg-teal-500",
+  retail: "bg-pink-500",
 }
 
 /**
@@ -146,11 +86,7 @@ export const eventStatusStyles: Record<
   { className: string; label: string }
 > = {
   scheduled: { className: "border-2", label: "Scheduled" },
-  in_progress: { className: "animate-pulse", label: "In Progress" },
+  "in-progress": { className: "animate-pulse", label: "In Progress" },
   completed: { className: "opacity-60", label: "Completed" },
-  canceled: { className: "line-through opacity-50", label: "Canceled" },
-  planned: { className: "border-2", label: "Planned" },
-  active: { className: "animate-pulse", label: "Active" },
-  ended: { className: "opacity-60", label: "Ended" },
-  aborted: { className: "line-through opacity-50", label: "Aborted" },
+  cancelled: { className: "line-through opacity-50", label: "Cancelled" },
 }

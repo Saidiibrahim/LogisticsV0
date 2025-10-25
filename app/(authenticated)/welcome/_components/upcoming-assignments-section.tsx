@@ -3,18 +3,18 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { DashboardUpcomingShift } from "@/lib/types/dashboard"
+import type { DashboardUpcomingAssignment } from "@/lib/types/dashboard"
 import { cn } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 
 /**
- * Properties for the `UpcomingShiftsSection` component.
+ * Properties for the `UpcomingAssignmentsSection` component.
  */
-interface UpcomingShiftsSectionProps {
+interface UpcomingAssignmentsSectionProps {
   /**
-   * List of upcoming driver shifts.
+   * List of upcoming driver assignments.
    */
-  shifts: DashboardUpcomingShift[]
+  assignments: DashboardUpcomingAssignment[]
 
   /**
    * Optional loading state when data is being fetched.
@@ -26,7 +26,7 @@ interface UpcomingShiftsSectionProps {
  * Format ISO date string to human-readable format.
  * Example output: "Mon, Jan 15"
  */
-function formatShiftDate(isoDate: string): string {
+function formatAssignmentDate(isoDate: string): string {
   try {
     const date = parseISO(isoDate)
     return format(date, "EEE, MMM d")
@@ -36,9 +36,9 @@ function formatShiftDate(isoDate: string): string {
 }
 
 /**
- * Individual upcoming shift card component.
+ * Individual upcoming assignment card component.
  */
-function UpcomingShiftCard({ shift }: { shift: DashboardUpcomingShift }) {
+function UpcomingAssignmentCard({ assignment }: { assignment: DashboardUpcomingAssignment }) {
   return (
     <div
       className={cn(
@@ -50,20 +50,20 @@ function UpcomingShiftCard({ shift }: { shift: DashboardUpcomingShift }) {
         {/* Date Column */}
         <div className="flex min-w-[120px] items-center gap-1.5 text-muted-foreground text-xs md:flex-col md:items-start md:gap-1">
           <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
-          <span>{formatShiftDate(shift.date)}</span>
+          <span>{formatAssignmentDate(assignment.date)}</span>
         </div>
 
-        {/* Shift Details Column */}
+        {/* Assignment Details Column */}
         <div className="flex-1 space-y-1">
           <div className="font-medium text-sm leading-tight flex items-center gap-2">
             <User className="h-3.5 w-3.5 text-muted-foreground" />
-            {shift.driverName}
+            {assignment.driverName}
           </div>
 
-          {shift.vanName && (
+          {assignment.vanName && (
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
               <Truck className="h-3 w-3" aria-hidden="true" />
-              <span>{shift.vanName}</span>
+              <span>{assignment.vanName}</span>
             </div>
           )}
         </div>
@@ -73,20 +73,20 @@ function UpcomingShiftCard({ shift }: { shift: DashboardUpcomingShift }) {
 }
 
 /**
- * Section displaying upcoming driver shifts on the dashboard.
+ * Section displaying upcoming driver assignments on the dashboard.
  *
- * Shows the next several shifts with date, driver name, and vehicle.
- * Includes empty state with CTA when no shifts are scheduled.
+ * Shows the next several assignments with date, driver name, and vehicle.
+ * Includes empty state with CTA when no assignments are scheduled.
  */
-export function UpcomingShiftsSection({
-  shifts,
+export function UpcomingAssignmentsSection({
+  assignments,
   isLoading = false,
-}: UpcomingShiftsSectionProps) {
+}: UpcomingAssignmentsSectionProps) {
   if (isLoading) {
     return (
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle>Upcoming Shifts</CardTitle>
+          <CardTitle>Upcoming Assignments</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -102,11 +102,11 @@ export function UpcomingShiftsSection({
     )
   }
 
-  if (shifts.length === 0) {
+  if (assignments.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle>Upcoming Shifts</CardTitle>
+          <CardTitle>Upcoming Assignments</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
@@ -118,9 +118,9 @@ export function UpcomingShiftsSection({
               <CalendarClock className="h-6 w-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-lg">No upcoming shifts</h3>
+              <h3 className="font-semibold text-lg">No upcoming assignments</h3>
               <p className="max-w-sm text-muted-foreground text-sm">
-                You have no driver shifts scheduled yet. Create a weekly roster
+                You have no driver assignments scheduled yet. Create a weekly roster
                 to assign drivers.
               </p>
             </div>
@@ -139,15 +139,15 @@ export function UpcomingShiftsSection({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle>Upcoming Shifts</CardTitle>
+        <CardTitle>Upcoming Assignments</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/calendar">View All</Link>
         </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {shifts.map((shift) => (
-            <UpcomingShiftCard key={shift.id} shift={shift} />
+          {assignments.map((assignment) => (
+            <UpcomingAssignmentCard key={assignment.id} assignment={assignment} />
           ))}
         </div>
       </CardContent>

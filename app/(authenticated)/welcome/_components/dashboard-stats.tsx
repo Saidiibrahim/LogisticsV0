@@ -50,7 +50,7 @@ function StatsCard({ title, value, icon: Icon, description }: StatsCardProps) {
  *
  * Displays four primary metrics:
  * - Active drivers
- * - Scheduled shifts this week
+ * - Scheduled assignments this week
  * - Total vehicles
  * - Upcoming rosters
  */
@@ -77,12 +77,12 @@ export function DashboardStats({
         title="Active Drivers"
         value={stats.activeDrivers}
         icon={Users}
-        description="Available for shifts"
+        description="Available for assignments"
       />
 
       <StatsCard
-        title="Shifts This Week"
-        value={stats.scheduledShiftsThisWeek}
+        title="Assignments This Week"
+        value={stats.scheduledAssignmentsThisWeek}
         icon={CalendarDays}
         description="Scheduled assignments"
       />

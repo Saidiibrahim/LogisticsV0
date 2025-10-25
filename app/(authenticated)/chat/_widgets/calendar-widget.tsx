@@ -14,35 +14,34 @@ const FALLBACK_EVENTS: CalendarWidgetData = {
   events: [
     {
       id: "evt-1",
-      title: "Morning Delivery Shift",
-      type: "shift",
+      title: "Downtown Depot Delivery",
+      type: "delivery",
       date: new Date().toISOString(),
       time: "08:00",
       location: "Downtown Depot",
     },
     {
       id: "evt-2",
-      title: "High-Intensity Training",
-      type: "training",
+      title: "City Mall Package Pickup",
+      type: "pickup",
       date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
       time: "10:30",
-      location: "St. George's Park",
+      location: "City Mall",
     },
     {
       id: "evt-3",
-      title: "Youth Coaching Clinic",
-      type: "coaching",
+      title: "North Station Delivery",
+      type: "delivery",
       date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      time: "18:00",
-      location: "Community Center",
+      time: "14:00",
+      location: "North Station",
     },
   ],
 }
 
-const typeStyles: Record<"shift" | "training" | "coaching", string> = {
-  shift: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
-  training: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-  coaching: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+const typeStyles: Record<"delivery" | "pickup", string> = {
+  delivery: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
+  pickup: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
 }
 
 const isCalendarWidgetData = (value: unknown): value is CalendarWidgetData => {

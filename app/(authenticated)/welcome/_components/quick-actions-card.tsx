@@ -1,4 +1,4 @@
-import { Calendar, Dumbbell, FileText, Plus } from "lucide-react"
+import { Calendar, Map, Package, Plus } from "lucide-react"
 import Link from "next/link"
 import type { ComponentType } from "react"
 
@@ -26,15 +26,15 @@ const QUICK_ACTIONS: QuickAction[] = [
     variant: "outline",
   },
   {
-    icon: FileText,
-    label: "Assessments",
-    href: "/library/assessments",
+    icon: Package,
+    label: "Deliveries",
+    href: "/calendar",
     variant: "outline",
   },
   {
-    icon: Dumbbell,
-    label: "Training",
-    href: "/workouts",
+    icon: Map,
+    label: "Routes",
+    href: "/calendar",
     variant: "outline",
   },
 ]

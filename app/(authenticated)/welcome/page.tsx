@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button"
 import { DashboardStats } from "./_components/dashboard-stats"
 import { QuickActionsCard } from "./_components/quick-actions-card"
 import { RecentRostersSection } from "./_components/recent-rosters-section"
-import { UpcomingShiftsSection } from "./_components/upcoming-shifts-section"
+import { UpcomingAssignmentsSection } from "./_components/upcoming-assignments-section"
 import { getDashboardData } from "./actions"
 
 /**
  * Primary dashboard entry point that displays an overview of the logistics
- * operation including quick stats, upcoming driver shifts, and recent roster activity.
+ * operation including quick stats, upcoming driver assignments, and recent roster activity.
  *
  * Server component that fetches data from Supabase and renders the dashboard.
  */
@@ -44,11 +44,11 @@ export default async function DashboardPage() {
     )
   }
 
-  const { quickStats, upcomingShifts, recentRosters } = data
+  const { quickStats, upcomingAssignments, recentRosters } = data
 
   const isNewUser =
     quickStats.activeDrivers === 0 &&
-    upcomingShifts.length === 0 &&
+    upcomingAssignments.length === 0 &&
     recentRosters.length === 0
 
   if (isNewUser) {
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <UpcomingShiftsSection shifts={upcomingShifts} />
+          <UpcomingAssignmentsSection assignments={upcomingAssignments} />
           <RecentRostersSection rosters={recentRosters} />
         </div>
         <div className="lg:col-span-1">

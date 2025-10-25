@@ -12,15 +12,15 @@
  * Available widget types that can be rendered in the chat interface.
  *
  * Each widget type corresponds to a specific visualization component:
- * - `calendar`: Displays upcoming shifts, training sessions, and events
- * - `training-summary`: Displays training session data and workload summaries
+ * - `calendar`: Displays upcoming deliveries, pickups, and scheduled events
+ * - `driver-performance`: Displays driver performance metrics and recent delivery history
  * - `performance-chart`: Renders performance trends and analytics (future)
  *
  * @see {@link WidgetConfig} for widget configuration structure
  */
 export type WidgetType =
   | "calendar"
-  | "training-summary"
+  | "driver-performance"
   | "performance-chart"
 
 /**
@@ -63,8 +63,8 @@ export interface WidgetConfig {
 /**
  * Calendar widget data structure.
  *
- * Contains an array of upcoming events including shifts, training sessions,
- * and coaching appointments. Events are typically filtered by date range
+ * Contains an array of upcoming events including deliveries, pickups,
+ * and scheduled events. Events are typically filtered by date range
  * and event type on the server side.
  *
  * @property {Array} events - List of calendar events
@@ -75,8 +75,8 @@ export interface WidgetConfig {
  *   events: [
  *     {
  *       id: "evt-1",
- *       title: "Morning Delivery Shift",
- *       type: "shift",
+ *       title: "Downtown Site Delivery",
+ *       type: "delivery",
  *       date: "2025-10-15T00:00:00Z",
  *       time: "08:00",
  *       location: "Downtown Depot"
@@ -92,7 +92,7 @@ export interface CalendarWidgetData {
     /** Event title/description */
     title: string
     /** Event category */
-    type: "shift" | "training" | "coaching"
+    type: "delivery" | "pickup"
     /** ISO date string */
     date: string
     /** Time in HH:MM format */
@@ -104,46 +104,46 @@ export interface CalendarWidgetData {
 
 
 /**
- * Training summary widget data structure.
+ * Driver performance widget data structure.
  *
- * Displays training workload summary including completed sessions,
- * total duration, average intensity, and details of recent training sessions.
+ * Displays driver performance summary including completed deliveries,
+ * total hours worked, on-time delivery rate, and details of recent deliveries.
  *
- * @property {Object} weeklySummary - Aggregated weekly training metrics
- * @property {Array} recentSessions - List of recent individual training sessions
+ * @property {Object} weeklySummary - Aggregated weekly performance metrics
+ * @property {Array} recentDeliveries - List of recent individual deliveries
  *
  * @example
  * ```typescript
- * const trainingData: TrainingSummaryWidgetData = {
+ * const performanceData: DriverPerformanceWidgetData = {
  *   weeklySummary: {
- *     sessionsCompleted: 5,
- *     totalDuration: "450 mins",
- *     avgIntensity: 7.8
+ *     deliveriesCompleted: 24,
+ *     totalHours: "32h 15m",
+ *     onTimeRate: 91.7
  *   },
- *   recentSessions: [
- *     { name: "Interval Sprints", duration: "45 mins", intensity: 8 }
+ *   recentDeliveries: [
+ *     { siteName: "Downtown Depot", completedAt: "2h ago", status: "delivered" }
  *   ]
  * }
  * ```
  */
-export interface TrainingSummaryWidgetData {
-  /** Summary of weekly training metrics */
+export interface DriverPerformanceWidgetData {
+  /** Summary of weekly performance metrics */
   weeklySummary: {
-    /** Number of completed training sessions */
-    sessionsCompleted: number
-    /** Total training duration as a formatted string */
-    totalDuration: string
-    /** Average intensity score (typically 1-10 scale) */
-    avgIntensity: number
+    /** Number of completed deliveries */
+    deliveriesCompleted: number
+    /** Total hours worked as a formatted string */
+    totalHours: string
+    /** On-time delivery rate as a percentage (0-100) */
+    onTimeRate: number
   }
-  /** Recent individual training sessions */
-  recentSessions: Array<{
-    /** Training session name/type */
-    name: string
-    /** Session duration as a formatted string */
-    duration: string
-    /** Intensity score for this session (typically 1-10 scale) */
-    intensity: number
+  /** Recent individual deliveries */
+  recentDeliveries: Array<{
+    /** Delivery site name */
+    siteName: string
+    /** When the delivery was completed (formatted time ago) */
+    completedAt: string
+    /** Delivery status */
+    status: "delivered" | "failed"
   }>
 }
 
@@ -154,11 +154,11 @@ export interface TrainingSummaryWidgetData {
  * The `null` option represents a widget with no data (loading state or error).
  *
  * @see {@link CalendarWidgetData}
- * @see {@link TrainingSummaryWidgetData}
+ * @see {@link DriverPerformanceWidgetData}
  */
 export type WidgetData =
   | CalendarWidgetData
-  | TrainingSummaryWidgetData
+  | DriverPerformanceWidgetData
   | null
 
 /**

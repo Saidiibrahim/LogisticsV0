@@ -4,6 +4,8 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { createShowCalendarTool } from "./calendar"
+import { createShowDriverPerformanceTool } from "./driver-performance"
 
 interface CreateChatToolsOptions {
   supabase: SupabaseClient
@@ -12,12 +14,13 @@ interface CreateChatToolsOptions {
 
 /**
  * Creates chat tools for the AI assistant with access to Supabase data.
- * Currently provides roster planning and delivery insights tools.
- *
- * TODO: Implement full tool definitions once AI SDK types are properly configured
+ * Provides tools for viewing calendar events and driver performance metrics.
  */
 export function createChatTools({ supabase, userId }: CreateChatToolsOptions) {
-  // Return empty tools object for now - stub implementation
-  // Full implementation requires proper AI SDK tool type configuration
-  return {}
+  const context = { supabase, userId }
+
+  return {
+    showCalendar: createShowCalendarTool(context),
+    showDriverPerformance: createShowDriverPerformanceTool(context),
+  }
 }

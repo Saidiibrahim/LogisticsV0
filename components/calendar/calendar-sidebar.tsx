@@ -18,21 +18,21 @@ import { cn } from "@/lib/utils"
 
 // Event type labels for display
 const eventTypeLabels: Record<EventType, string> = {
-  shift: "Shifts",
-  training: "Training Sessions",
-  coaching: "Coaching Sessions",
+  delivery: "Deliveries",
+  pickup: "Pickups",
+  meeting: "Meetings",
+  break: "Breaks",
+  maintenance: "Maintenance",
+  collection: "Collections",
+  retail: "Retail",
 }
 
 // Commonly shown statuses for the filter
 const commonStatuses: EventStatus[] = [
   "scheduled",
-  "planned",
-  "in_progress",
-  "active",
+  "in-progress",
   "completed",
-  "ended",
-  "canceled",
-  "aborted",
+  "cancelled",
 ]
 
 /**

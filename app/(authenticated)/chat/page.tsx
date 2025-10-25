@@ -9,7 +9,7 @@
  * - AI-powered responses using OpenAI GPT-4
  * - Dynamic widget display in split-view layout
  * - Real-time streaming responses
- * - Tool-based visualizations (calendar, stats, training summary)
+ * - Tool-based visualizations (calendar, stats, driver performance)
  *
  * **Architecture:**
  * - Server component (Next.js 15 App Router)

@@ -1,26 +1,40 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-This Next.js 15 app uses the App Router in `app/` where each route folder holds its `page.tsx`, loading states, and server actions. Shared feature widgets live in `components/`, while `ui/` stores shadcn design primitives. `lib/` centralizes Supabase clients, helpers, and domain utilities. Styling tokens stay in `styles/`, and static assets belong in `public/`. When adding features, co-locate hooks and types with the owning route or component.
+
+- `app/` holds App Router segments with their `page.tsx`, loading states, server actions, and any route-scoped hooks or types.
+- Reuse shared widgets from `components/`, primitives from `ui/`, and Tailwind tokens in `styles/` before adding new variants.
+- Keep Supabase clients and domain helpers in `lib/`; cross-cutting code lives in `hooks/`, `types/`, long-form docs in `docs/`, and shared tests in `test/`.
 
 ## Build, Test, and Development Commands
-Stick with `pnpm` to stay aligned with the lockfile.
-```bash
-pnpm dev      # run local dev server with hot reload
-pnpm build    # produce optimized production output
-pnpm start    # serve the build locally
-pnpm lint     # run ESLint + TypeScript checks
-```
-Re-install dependencies with `pnpm install` whenever `package.json` or the lockfile changes.
+
+- `pnpm dev` runs the hot reload server; pair `pnpm build` and `pnpm start` to sanity-check the production bundle pre-merge.
+- `pnpm lint`, `pnpm type-check`, and `pnpm format` wrap Ultracite and TypeScript—iterate until the output is clean.
+- `pnpm test` (watch or run) covers day-to-day feedback, while `pnpm test:coverage` guards release branches.
 
 ## Coding Style & Naming Conventions
-The repo relies on the default Next.js lint config; resolve warnings before committing. Use 2-space indentation, TypeScript types for component props, and keep components PascalCase (`AssignmentTable`) while hooks remain camelCase (`useMatchFeed`). Tailwind utilities are preferred for layout; extract patterns into `ui/` atoms when reused. Supabase logic should flow through helpers in `lib/` rather than being called directly from components.
+
+- Stick to TypeScript with 2-space indentation and typed component props or helper signatures.
+- Components use PascalCase (`AssignmentTable`), hooks use camelCase (`useInventoryFeed`), and shared constants use `SCREAMING_SNAKE_CASE`.
+- Favor Tailwind utilities, extracting repeated patterns into `ui/` atoms or `components/` widgets; touch Supabase only via `lib/`.
 
 ## Testing Guidelines
-A dedicated test runner is not yet configured. Add lightweight unit or integration tests next to the code in `__tests__/` folders when you introduce non-trivial logic, and document manual verification steps in the PR. At minimum execute `pnpm lint` before opening or updating a pull request. If you add tooling such as Vitest or Playwright, wire new scripts in `package.json` and update this guide.
+
+- Vitest plus Testing Library powers unit and integration suites; store `<name>.test.ts(x)` beside the code or in `test/` for shared flows.
+- Mock Supabase and network dependencies locally—CI should stay offline-safe.
+- Run `pnpm lint` and `pnpm test` before every push; layer `pnpm test:coverage` when touching riskier paths.
 
 ## Commit & Pull Request Guidelines
-Recent commits use short, descriptive subjects (`fixed google auth cookie issue`). Prefer an imperative summary under 72 characters, optionally adopting Conventional Commit prefixes when it clarifies intent (`feat: add assignment calendar`). Link issues or tickets in the body. Pull requests should explain the change, highlight UI impacts with screenshots, list tests performed, and call out follow-up work.
 
-## Environment & Configuration
-Secrets belong in `.env.local`; never commit them. Declare new runtime variables in `next.config.mjs` and document required keys in your PR so reviewers can reproduce the environment.
+- Write short, imperative commit subjects under 72 characters; add Conventional prefixes (`feat:`, `fix:`) when they clarify intent.
+- Reference tickets in bodies and group related edits into logical commits to ease review.
+- PRs should summarize the change, link issues, attach UI screenshots for visual updates, list executed commands, and flag follow-up or env notes.
+
+## Security & Configuration Tips
+
+- Never commit secrets—use `.env.local` and document new keys in the PR description.
+- Update `next.config.mjs` when adding runtime config and mention schema or storage migrations in `docs/`; Supabase access should stay funneled through `lib/`.
+
+## ExecPlans
+
+When writing complex features or refactoring, you should create an ExecPlan as described in the .agent/plans/PLANS.md file. This plan should be stored in the `.agent/plans/{feature_name}/` directory and it should be accompanied by a task list in the `.agent/tasks/{feature_name}/` directory. Place any temporary research, clones, etc., in the .gitignored subdirectory of the .agent/ directory.

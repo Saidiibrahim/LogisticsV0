@@ -114,7 +114,7 @@ export function WeeklyRosterDialog({ open, onOpenChange }: WeeklyRosterDialogPro
     prevWeekDates.forEach((prevDate, idx) => {
       const prevDateStr = format(prevDate, "yyyy-MM-dd")
       const currentDateStr = format(weekDates[idx], "yyyy-MM-dd")
-      const prevEvents = events.filter((ev) => isSameDay(ev.start, prevDate))
+      const prevEvents = events.filter((ev) => isSameDay(ev.start_time, prevDate))
       if (prevEvents.length > 0) {
         // naive: take first driver if a driverId field exists on events in future
         // leave unassigned otherwise
@@ -162,10 +162,28 @@ export function WeeklyRosterDialog({ open, onOpenChange }: WeeklyRosterDialogPro
         setIsPublishing(false)
         return
       }
-      // Email sending is stubbed via server action in this phase, persist roster only
-      await saveCurrentRoster("published")
-      toast({ title: "Roster published", description: "Roster published successfully." })
-      onOpenChange(false)
+      const res = await saveCurrentRoster("published")
+      const notifications = (res as any)?.data?.notifications as
+        | { totalDrivers: number; sent: number; failed: number; failures?: Array<{ driverEmail?: string; message: string }> }
+        | undefined
+
+      if (notifications && notifications.failed > 0) {
+        const firstMessage = notifications.failures?.[0]?.message
+        setError(
+          `Published, but ${notifications.failed}/${notifications.totalDrivers} email(s) failed.${
+            firstMessage ? ` ${firstMessage}` : ""
+          }`
+        )
+        toast({
+          variant: "destructive",
+          title: "Some emails failed",
+          description:
+            "Roster was published, but some notifications could not be sent. Check your email domain configuration.",
+        })
+      } else {
+        toast({ title: "Roster published", description: "Roster published successfully." })
+        onOpenChange(false)
+      }
     } catch (e) {
       setError("Error publishing roster")
       toast({ variant: "destructive", title: "Error publishing", description: "Please try again." })

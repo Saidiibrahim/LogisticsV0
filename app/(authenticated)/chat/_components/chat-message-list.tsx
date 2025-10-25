@@ -102,7 +102,7 @@ export function ChatMessageList({
           <div className="text-center">
             <h2 className="text-2xl font-semibold">Start a conversation</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ask anything about your matches, training, or performance.
+              Ask anything about your deliveries, routes, or driver performance.
             </p>
           </div>
         </div>

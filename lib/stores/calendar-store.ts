@@ -47,14 +47,12 @@ const createInitialState = () => ({
   selectedDate: new Date(),
   events: [] as CalendarEvent[],
   filters: {
-    eventTypes: ["match", "training", "coaching"] as EventType[],
+    eventTypes: ["delivery", "pickup", "meeting", "break", "maintenance", "collection", "retail"] as EventType[],
     eventStatuses: [
       "scheduled",
-      "in_progress",
+      "in-progress",
       "completed",
-      "planned",
-      "active",
-      "ended",
+      "cancelled",
     ] as EventStatus[],
     searchQuery: "",
   },
