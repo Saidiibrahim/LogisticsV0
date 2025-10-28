@@ -3,7 +3,7 @@
  * contract and the noop fallback used during server rendering.
  */
 import { beforeEach, describe, expect, it } from "vitest"
-import { createCookieStorage, createNoopStorage } from "../persist"
+import { createNoopStorage, createRawCookieStorage } from "../persist"
 
 const clearCookies = () => {
   document.cookie
@@ -17,13 +17,13 @@ const clearCookies = () => {
     })
 }
 
-describe("createCookieStorage", () => {
+describe("createRawCookieStorage", () => {
   beforeEach(() => {
     clearCookies()
   })
 
   it("writes and reads cookies", () => {
-    const storage = createCookieStorage({ path: "/" })
+    const storage = createRawCookieStorage({ path: "/" })
     const payload = JSON.stringify({ value: 42 })
 
     storage.setItem("test", payload)
@@ -33,7 +33,7 @@ describe("createCookieStorage", () => {
   })
 
   it("removes cookies", () => {
-    const storage = createCookieStorage()
+    const storage = createRawCookieStorage()
     storage.setItem("session", JSON.stringify({ ok: true }))
 
     storage.removeItem("session")
@@ -49,11 +49,11 @@ describe("createNoopStorage", () => {
   it("returns null for read operations and ignores writes", () => {
     const storage = createNoopStorage()
 
-    expect(storage.getItem("anything")).toBeNull()
+    expect(storage.getItem()).toBeNull()
 
     expect(() => {
-      storage.setItem("key", "value")
-      storage.removeItem("key")
+      storage.setItem()
+      storage.removeItem()
     }).not.toThrow()
   })
 })

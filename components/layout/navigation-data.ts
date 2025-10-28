@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  Calendar,
-  LayoutDashboard,
-  MessageSquare,
-} from "lucide-react"
+import { Calendar, LayoutDashboard, MessageSquare } from "lucide-react"
 import { ComponentType, SVGProps } from "react"
 
 /**

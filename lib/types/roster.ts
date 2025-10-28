@@ -39,5 +39,3 @@ export interface RosterChange {
   previousDriverId?: string
   newDriverId?: string
 }
-
-

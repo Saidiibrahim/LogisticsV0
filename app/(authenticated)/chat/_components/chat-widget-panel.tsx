@@ -49,7 +49,6 @@ const CalendarWidget = dynamic(
   { loading: () => <WidgetSkeleton /> }
 )
 
-
 /**
  * Driver performance widget - dynamically imported for code-splitting.
  * Shows loading skeleton while component loads.

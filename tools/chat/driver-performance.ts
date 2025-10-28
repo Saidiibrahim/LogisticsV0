@@ -29,9 +29,12 @@ interface RawDelivery {
   scheduled_time: string | null
   delivered_at: string | null
   status: string
-  sites: {
-    name: string
-  } | null | Array<{ name: string }>
+  sites:
+    | {
+        name: string
+      }
+    | null
+    | Array<{ name: string }>
 }
 
 const MAX_WEEKS = 4
@@ -151,9 +154,7 @@ async function fetchRecentDeliveries(
   return (data ?? []).map((delivery) => delivery as RawDelivery)
 }
 
-function calculateOnTimeRate(
-  deliveries: RawDelivery[]
-): number {
+function calculateOnTimeRate(deliveries: RawDelivery[]): number {
   if (deliveries.length === 0) {
     return 0
   }
@@ -167,11 +168,14 @@ function calculateOnTimeRate(
     const delivered = new Date(delivery.delivered_at)
 
     // Consider on-time if delivered within 15 minutes of scheduled time
-    const diffMinutes = (delivered.getTime() - scheduled.getTime()) / (60 * 1000)
+    const diffMinutes =
+      (delivered.getTime() - scheduled.getTime()) / (60 * 1000)
     return Math.abs(diffMinutes) <= 15
   })
 
-  return Number(((onTimeDeliveries.length / deliveries.length) * 100).toFixed(1))
+  return Number(
+    ((onTimeDeliveries.length / deliveries.length) * 100).toFixed(1)
+  )
 }
 
 function summariseDriverPerformance(
@@ -189,9 +193,7 @@ function summariseDriverPerformance(
     }
   }
 
-  const completedEvents = events.filter(
-    (event) => event.status === "completed"
-  )
+  const completedEvents = events.filter((event) => event.status === "completed")
 
   const totalMinutes = Math.round(
     completedEvents.reduce(
@@ -207,15 +209,18 @@ function summariseDriverPerformance(
     .slice(0, MAX_RECENT_DELIVERIES)
     .map((delivery) => {
       const siteName = Array.isArray(delivery.sites)
-        ? delivery.sites[0]?.name ?? "Unknown Site"
-        : delivery.sites?.name ?? "Unknown Site"
+        ? (delivery.sites[0]?.name ?? "Unknown Site")
+        : (delivery.sites?.name ?? "Unknown Site")
 
       return {
         siteName,
         completedAt: delivery.delivered_at
           ? formatTimeAgo(delivery.delivered_at)
           : "N/A",
-        status: delivery.status === "delivered" ? ("delivered" as const) : ("failed" as const),
+        status:
+          delivery.status === "delivered"
+            ? ("delivered" as const)
+            : ("failed" as const),
       }
     })
 

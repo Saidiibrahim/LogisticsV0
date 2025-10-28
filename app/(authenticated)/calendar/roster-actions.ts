@@ -1,21 +1,70 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { createClient } from "@/lib/supabase/server"
+import {
+  sendRosterChangeNotification,
+  sendRosterNotification,
+} from "@/lib/actions/email-actions"
+import { requirePermission, type UserRole } from "@/lib/auth/permissions"
 import { listActiveDrivers } from "@/lib/supabase/queries/drivers"
-import { getRosterByWeek, upsertRosterWithAssignments } from "@/lib/supabase/queries/roster"
-import type { Roster, RosterAssignment, RosterStatus } from "@/lib/types/roster"
-import { sendRosterNotification, sendRosterChangeNotification } from "@/lib/actions/email-actions"
+import {
+  getRosterByWeek,
+  upsertRosterWithAssignments,
+} from "@/lib/supabase/queries/roster"
+import { createClient } from "@/lib/supabase/server"
+import type {
+  Driver,
+  Roster,
+  RosterAssignment,
+  RosterStatus,
+} from "@/lib/types/roster"
 
-interface ActionState<T = unknown> {
+export interface ActionState<T = unknown> {
   success: boolean
   error?: string
   roster?: Roster
-  drivers?: any[]
+  drivers?: Driver[]
   data?: T
 }
 
-export async function loadRosterForWeek(weekStartISO: string): Promise<ActionState> {
+interface UserProfile {
+  organizationId: string
+  role: UserRole
+}
+
+async function getUserProfile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<UserProfile | null> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", userId)
+    .single()
+
+  if (error || !data) {
+    console.error("[roster] Error fetching user profile:", error)
+    return null
+  }
+
+  if (!data.organization_id) {
+    console.error("[roster] Missing organization for user:", userId)
+    return null
+  }
+
+  const role = (
+    typeof data.role === "string" ? data.role : "driver"
+  ) as UserRole
+
+  return {
+    organizationId: data.organization_id,
+    role,
+  }
+}
+
+export async function loadRosterForWeek(
+  weekStartISO: string
+): Promise<ActionState> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -23,18 +72,17 @@ export async function loadRosterForWeek(weekStartISO: string): Promise<ActionSta
   if (!user) return { success: false, error: "Not authenticated" }
 
   const [drivers, roster] = await Promise.all([
-    listActiveDrivers(supabase as any),
-    getRosterByWeek(supabase as any, weekStartISO),
+    listActiveDrivers(supabase),
+    getRosterByWeek(supabase, weekStartISO),
   ])
 
-  const finalRoster: Roster =
-    roster ?? {
-      id: randomUUID(),
-      weekStart: weekStartISO,
-      status: "draft",
-      version: 1,
-      assignments: [],
-    }
+  const finalRoster: Roster = roster ?? {
+    id: randomUUID(),
+    weekStart: weekStartISO,
+    status: "draft",
+    version: 1,
+    assignments: [],
+  }
 
   return { success: true, drivers, roster: finalRoster }
 }
@@ -58,8 +106,24 @@ export async function saveRoster(
   } = await supabase.auth.getUser()
   if (!user) return { success: false, error: "Not authenticated" }
 
+  const profile = await getUserProfile(supabase, user.id)
+  if (!profile) {
+    return { success: false, error: "Could not determine your organization." }
+  }
+
+  const requiresPublishPermission =
+    status === "published" || status === "modified"
+  const permissionCheck = requirePermission(
+    profile.role,
+    requiresPublishPermission ? "rosters.publish" : "rosters.edit"
+  )
+
+  if (!permissionCheck.allowed) {
+    return { success: false, error: permissionCheck.error }
+  }
+
   // Support empty drafts - no need to reject
-  const existing = await getRosterByWeek(supabase as any, weekStartISO)
+  const existing = await getRosterByWeek(supabase, weekStartISO)
   const next: Omit<Roster, "id"> & { id?: string } = {
     id: rosterId ?? existing?.id,
     weekStart: weekStartISO,
@@ -67,14 +131,14 @@ export async function saveRoster(
     version: existing ? existing.version + 1 : 1,
     assignments,
   }
-  const saved = await upsertRosterWithAssignments(supabase as any, next)
+  const saved = await upsertRosterWithAssignments(supabase, next)
   if (!saved) return { success: false, error: "Failed to save roster" }
 
   // Send email notifications if roster is being published
   if (status === "published" || status === "modified") {
     try {
       // Get all drivers to match IDs with emails
-      const drivers = await listActiveDrivers(supabase as any)
+      const drivers = await listActiveDrivers(supabase)
       const driverMap = new Map(drivers.map((d) => [d.id, d]))
 
       // Group assignments by driver
@@ -104,7 +168,9 @@ export async function saveRoster(
       for (const [driverId, dates] of assignmentsByDriver.entries()) {
         const driver = driverMap.get(driverId)
         if (!driver || !driver.email) {
-          console.warn(`[roster] Driver ${driverId} has no email, skipping notification`)
+          console.warn(
+            `[roster] Driver ${driverId} has no email, skipping notification`
+          )
           // Add assignments without notification timestamp
           for (const date of dates) {
             updatedAssignments.push({ date, driverId })
@@ -113,29 +179,22 @@ export async function saveRoster(
         }
 
         // Determine if this is a change notification or new notification
-        const existingAssignment = existing?.assignments.find(
-          (a) => a.driverId === driverId && dates.includes(a.date)
-        )
-        const isChange = existing?.status === "published" && status === "modified"
+        const isChange =
+          existing?.status === "published" && status === "modified"
 
-        let notificationResult
-        if (isChange) {
-          // Send change notification for modified rosters
-          notificationResult = await sendRosterChangeNotification(
-            driver.email,
-            driver.name,
-            dates,
-            weekStartISO
-          )
-        } else {
-          // Send standard notification for new published rosters
-          notificationResult = await sendRosterNotification(
-            driver.email,
-            driver.name,
-            dates,
-            weekStartISO
-          )
-        }
+        const notificationResult = isChange
+          ? await sendRosterChangeNotification(
+              driver.email,
+              driver.name,
+              dates,
+              weekStartISO
+            )
+          : await sendRosterNotification(
+              driver.email,
+              driver.name,
+              dates,
+              weekStartISO
+            )
 
         if (notificationResult.success) {
           // Add assignments with notification data
@@ -147,10 +206,15 @@ export async function saveRoster(
               notificationId: notificationResult.notificationId,
             })
           }
-          console.log(`[roster] Sent ${isChange ? "change" : ""} notification to ${driver.email}`)
+          console.log(
+            `[roster] Sent ${isChange ? "change" : ""} notification to ${driver.email}`
+          )
           sentCount += 1
         } else {
-          console.error(`[roster] Failed to send notification to ${driver.email}:`, notificationResult.error)
+          console.error(
+            `[roster] Failed to send notification to ${driver.email}:`,
+            notificationResult.error
+          )
           // Add assignments without notification timestamp (keep trying next time)
           for (const date of dates) {
             updatedAssignments.push({ date, driverId })
@@ -172,7 +236,10 @@ export async function saveRoster(
           id: saved.id,
           assignments: updatedAssignments,
         }
-        const finalRoster = await upsertRosterWithAssignments(supabase as any, updatedRoster)
+        const finalRoster = await upsertRosterWithAssignments(
+          supabase,
+          updatedRoster
+        )
         if (finalRoster) {
           const notifications = {
             totalDrivers: assignmentsByDriver.size,
@@ -195,11 +262,15 @@ export async function saveRoster(
     } catch (error) {
       console.error("[roster] Error sending email notifications:", error)
       // Don't fail the whole operation if emails fail - roster was already saved
-      return { success: true, roster: saved, data: { notifications: { totalDrivers: 0, sent: 0, failed: 0, failures: [] } } }
+      return {
+        success: true,
+        roster: saved,
+        data: {
+          notifications: { totalDrivers: 0, sent: 0, failed: 0, failures: [] },
+        },
+      }
     }
   }
 
   return { success: true, roster: saved }
 }
-
-

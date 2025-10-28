@@ -3,6 +3,7 @@
 import { User } from "lucide-react"
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useUser } from "@/hooks/use-user"
+import { formatRole } from "@/lib/auth/permissions"
 
 interface SidebarUserMenuProps {
   userEmail?: string
@@ -28,10 +31,12 @@ export function SidebarUserMenu({
   userName,
   subscriptionTier,
 }: SidebarUserMenuProps) {
+  const { role } = useUser()
   const isPricingEnabled =
     process.env.NEXT_PUBLIC_FEATURE_PRICING_PAGE_ENABLED === "true"
   const displayName = userName ?? userEmail ?? "Account"
   const planLabel = subscriptionTier ?? "Free tier"
+  const formattedRole = formatRole(role)
 
   return (
     <SidebarMenu>
@@ -70,6 +75,9 @@ export function SidebarUserMenu({
                     {userEmail}
                   </span>
                 )}
+                <Badge variant="secondary" className="mt-2 w-fit text-xs">
+                  {formattedRole}
+                </Badge>
               </div>
             </DropdownMenuLabel>
             {isPricingEnabled ? (

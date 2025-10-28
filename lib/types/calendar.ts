@@ -63,6 +63,7 @@ export interface CalendarFilters {
   eventTypes: EventType[]
   eventStatuses: EventStatus[]
   searchQuery: string
+  driverIds: string[] // Filter by assigned driver IDs (empty means show all)
 }
 
 /**

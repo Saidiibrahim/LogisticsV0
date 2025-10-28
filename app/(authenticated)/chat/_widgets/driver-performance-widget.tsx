@@ -1,6 +1,11 @@
 "use client"
 
-import { Activity, Calendar as CalendarIcon, TrendingUp, CheckCircle2, XCircle } from "lucide-react"
+import {
+  Activity,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DriverPerformanceWidgetData } from "@/lib/types/chat"
 
@@ -27,12 +32,17 @@ const isDriverPerformanceWidgetData = (
   if (!value || typeof value !== "object") {
     return false
   }
-  const { weeklySummary, recentDeliveries } = value as DriverPerformanceWidgetData
+  const { weeklySummary, recentDeliveries } =
+    value as DriverPerformanceWidgetData
   return Boolean(weeklySummary) && Array.isArray(recentDeliveries)
 }
 
-export function DriverPerformanceWidget({ data }: DriverPerformanceWidgetProps) {
-  const performance = isDriverPerformanceWidgetData(data) ? data : FALLBACK_SUMMARY
+export function DriverPerformanceWidget({
+  data,
+}: DriverPerformanceWidgetProps) {
+  const performance = isDriverPerformanceWidgetData(data)
+    ? data
+    : FALLBACK_SUMMARY
 
   return (
     <div className="space-y-4">

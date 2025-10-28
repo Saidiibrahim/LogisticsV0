@@ -1,7 +1,8 @@
 "use client"
 
 import { AlertCircle, Loader2, Plus } from "lucide-react"
-import { useActionState, useId, useMemo, useState } from "react"
+import { useActionState, useEffect, useId, useMemo, useState } from "react"
+import { CanAccess } from "@/components/auth"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { createClient } from "@/lib/supabase/client"
 import { createCalendarEvent } from "../actions"
+
+interface Driver {
+  id: string
+  full_name: string
+  driver_color: string | null
+}
 
 // State shape shared across the action backed forms in this dialog
 const initialState = { error: undefined, success: undefined }
@@ -72,28 +80,30 @@ export function CreateEventDialog({ defaultDate }: CreateEventDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-2 size-4" />
-          New Event
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
-          <DialogDescription>
-            Create a delivery, pickup, meeting, or other logistics event
-          </DialogDescription>
-        </DialogHeader>
+    <CanAccess permission="events.create">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="mr-2 size-4" />
+            New Event
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Event</DialogTitle>
+            <DialogDescription>
+              Create a delivery, pickup, meeting, or other logistics event
+            </DialogDescription>
+          </DialogHeader>
 
-        <EventForm
-          defaultDateTime={defaultDateTime}
-          minDateTime={minDateTime}
-          onSuccess={handleClose}
-        />
-      </DialogContent>
-    </Dialog>
+          <EventForm
+            defaultDateTime={defaultDateTime}
+            minDateTime={minDateTime}
+            onSuccess={handleClose}
+          />
+        </DialogContent>
+      </Dialog>
+    </CanAccess>
   )
 }
 
@@ -117,11 +127,35 @@ function EventForm({
   const locationAddressId = useId()
   const descriptionId = useId()
   const priorityId = useId()
+  const driverIdFieldId = useId()
+
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [loadingDrivers, setLoadingDrivers] = useState(true)
 
   const [state, formAction, isPending] = useActionState(
     createCalendarEvent,
     initialState
   )
+
+  // Fetch available drivers
+  useEffect(() => {
+    async function fetchDrivers() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, full_name, driver_color")
+        .eq("role", "driver")
+        .eq("is_active", true)
+        .order("full_name")
+
+      if (!error && data) {
+        setDrivers(data)
+      }
+      setLoadingDrivers(false)
+    }
+
+    fetchDrivers()
+  }, [])
 
   // Close dialog on success
   if (state.success) {
@@ -185,6 +219,32 @@ function EventForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={driverIdFieldId}>Assigned Driver</Label>
+        <Select
+          name="assigned_driver_id"
+          disabled={isPending || loadingDrivers}
+        >
+          <SelectTrigger id={driverIdFieldId}>
+            <SelectValue
+              placeholder={
+                loadingDrivers
+                  ? "Loading drivers..."
+                  : "Select a driver (optional)"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {drivers.map((driver) => (
+              <SelectItem key={driver.id} value={driver.id}>
+                {driver.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -28,6 +28,8 @@ describe("useUserStore", () => {
         email: "user@example.com",
         name: "Test User",
         subscriptionTier: "Pro",
+        role: "team-leader",
+        organizationId: "org-123",
       })
     })
 
@@ -35,6 +37,8 @@ describe("useUserStore", () => {
     expect(state.userEmail).toBe("user@example.com")
     expect(state.userName).toBe("Test User")
     expect(state.subscriptionTier).toBe("Pro")
+    expect(state.role).toBe("team-leader")
+    expect(state.organizationId).toBe("org-123")
   })
 
   it("clears user state", () => {
@@ -44,6 +48,8 @@ describe("useUserStore", () => {
         email: "user@example.com",
         name: "Test User",
         subscriptionTier: "Pro",
+        role: "driver",
+        organizationId: "org-789",
       })
       // `clearUser` acts as a logout hook; everything should be undefined.
       store.clearUser()
@@ -53,5 +59,7 @@ describe("useUserStore", () => {
     expect(state.userEmail).toBeUndefined()
     expect(state.userName).toBeUndefined()
     expect(state.subscriptionTier).toBeUndefined()
+    expect(state.role).toBeUndefined()
+    expect(state.organizationId).toBeUndefined()
   })
 })

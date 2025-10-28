@@ -35,6 +35,7 @@ interface CalendarState {
   setFilters: (filters: Partial<CalendarFilters>) => void
   toggleEventType: (type: EventType) => void
   toggleEventStatus: (status: EventStatus) => void
+  toggleDriverFilter: (driverId: string) => void
   setSearchQuery: (query: string) => void
   reset: () => void
 }
@@ -47,7 +48,15 @@ const createInitialState = () => ({
   selectedDate: new Date(),
   events: [] as CalendarEvent[],
   filters: {
-    eventTypes: ["delivery", "pickup", "meeting", "break", "maintenance", "collection", "retail"] as EventType[],
+    eventTypes: [
+      "delivery",
+      "pickup",
+      "meeting",
+      "break",
+      "maintenance",
+      "collection",
+      "retail",
+    ] as EventType[],
     eventStatuses: [
       "scheduled",
       "in-progress",
@@ -55,6 +64,7 @@ const createInitialState = () => ({
       "cancelled",
     ] as EventStatus[],
     searchQuery: "",
+    driverIds: [] as string[], // Empty means show all drivers
   },
 })
 
@@ -109,6 +119,16 @@ export const useCalendarStore = create<CalendarState>((set) => ({
         eventStatuses: state.filters.eventStatuses.includes(status)
           ? state.filters.eventStatuses.filter((s) => s !== status)
           : [...state.filters.eventStatuses, status],
+      },
+    })),
+
+  toggleDriverFilter: (driverId) =>
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        driverIds: state.filters.driverIds.includes(driverId)
+          ? state.filters.driverIds.filter((id) => id !== driverId)
+          : [...state.filters.driverIds, driverId],
       },
     })),
 

@@ -139,10 +139,14 @@ export function ListView({ onEventClick }: ListViewProps) {
                               )}
 
                               {/* Location */}
-                              {(event.location_name || event.location_address) && (
+                              {(event.location_name ||
+                                event.location_address) && (
                                 <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                                   <MapPin className="size-4" />
-                                  <span>{event.location_name || event.location_address}</span>
+                                  <span>
+                                    {event.location_name ||
+                                      event.location_address}
+                                  </span>
                                 </div>
                               )}
 

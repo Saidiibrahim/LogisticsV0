@@ -1,11 +1,10 @@
+import { format, parseISO } from "date-fns"
 import { CalendarClock, Plus, Truck, User } from "lucide-react"
 import Link from "next/link"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DashboardUpcomingAssignment } from "@/lib/types/dashboard"
 import { cn } from "@/lib/utils"
-import { format, parseISO } from "date-fns"
 
 /**
  * Properties for the `UpcomingAssignmentsSection` component.
@@ -38,7 +37,11 @@ function formatAssignmentDate(isoDate: string): string {
 /**
  * Individual upcoming assignment card component.
  */
-function UpcomingAssignmentCard({ assignment }: { assignment: DashboardUpcomingAssignment }) {
+function UpcomingAssignmentCard({
+  assignment,
+}: {
+  assignment: DashboardUpcomingAssignment
+}) {
   return (
     <div
       className={cn(
@@ -120,8 +123,8 @@ export function UpcomingAssignmentsSection({
             <div className="space-y-1">
               <h3 className="font-semibold text-lg">No upcoming assignments</h3>
               <p className="max-w-sm text-muted-foreground text-sm">
-                You have no driver assignments scheduled yet. Create a weekly roster
-                to assign drivers.
+                You have no driver assignments scheduled yet. Create a weekly
+                roster to assign drivers.
               </p>
             </div>
             <Button asChild>
@@ -147,7 +150,10 @@ export function UpcomingAssignmentsSection({
       <CardContent>
         <div className="space-y-2">
           {assignments.map((assignment) => (
-            <UpcomingAssignmentCard key={assignment.id} assignment={assignment} />
+            <UpcomingAssignmentCard
+              key={assignment.id}
+              assignment={assignment}
+            />
           ))}
         </div>
       </CardContent>

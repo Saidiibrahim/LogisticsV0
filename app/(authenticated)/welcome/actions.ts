@@ -1,5 +1,6 @@
 "use server"
 
+import { addDays, format, startOfWeek } from "date-fns"
 import { createClient } from "@/lib/supabase/server"
 import type {
   DashboardData,
@@ -9,10 +10,31 @@ import type {
   GetDashboardDataOptions,
 } from "@/lib/types/dashboard"
 import { getErrorMessage } from "@/lib/utils/errors"
-import { addDays, format, startOfWeek } from "date-fns"
 
 const DEFAULT_UPCOMING_LIMIT = 10
 const DEFAULT_RECENT_LIMIT = 5
+
+type DriverVehicleRow = {
+  registration_number: string | null
+  make: string | null
+  model: string | null
+}
+
+type DriverWithVehicleRow = {
+  id: string
+  full_name: string | null
+  vehicle_id: string | null
+  vehicles: DriverVehicleRow | null
+}
+
+type RecentRosterRow = {
+  id: string
+  week_start_date: string
+  status: string
+  version: number
+  last_modified_at: string | null
+  assignments: unknown
+}
 
 /**
  * Get the start of the current week (Monday).
@@ -98,7 +120,10 @@ export async function getDashboardData(
       ])
 
     if (activeDriversResult.error) {
-      console.error("[dashboard] activeDrivers error:", activeDriversResult.error)
+      console.error(
+        "[dashboard] activeDrivers error:",
+        activeDriversResult.error
+      )
       return { data: null, error: "Failed to load dashboard data" }
     }
 
@@ -118,7 +143,9 @@ export async function getDashboardData(
     // Count total assignments for this week across all rosters
     let scheduledAssignmentsThisWeek = 0
     for (const roster of weekRosterResult.data ?? []) {
-      const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
+      const assignments = Array.isArray(roster.assignments)
+        ? roster.assignments
+        : []
       scheduledAssignmentsThisWeek += assignments.length
     }
 
@@ -147,25 +174,31 @@ export async function getDashboardData(
     // Flatten assignments and filter for upcoming dates
     const upcomingAssignments: DashboardUpcomingAssignment[] = []
     for (const roster of upcomingRostersData ?? []) {
-      const assignments = Array.isArray(roster.assignments) ? roster.assignments : []
+      const assignments = Array.isArray(roster.assignments)
+        ? roster.assignments
+        : []
       for (const assignment of assignments) {
-        if (assignment.date >= today && upcomingAssignments.length < upcomingLimit) {
+        if (
+          assignment.date >= today &&
+          upcomingAssignments.length < upcomingLimit
+        ) {
           // Fetch driver details
-          const { data: driver } = await supabase
+          const { data: driver } = (await supabase
             .from("users")
-            .select("id, full_name, vehicle_id, vehicles:vehicle_id(registration_number, make, model)")
+            .select(
+              "id, full_name, vehicle_id, vehicles:vehicle_id(registration_number, make, model)"
+            )
             .eq("id", assignment.driverId)
-            .single()
+            .single()) as { data: DriverWithVehicleRow | null }
 
           if (driver) {
-            // Cast vehicles to the correct type (Supabase returns single object for foreign key, not array)
-            const vehicle = driver.vehicles as any
+            const vehicle = driver.vehicles
             upcomingAssignments.push({
               id: `${assignment.date}-${assignment.driverId}`,
               date: assignment.date,
               driverName: driver.full_name ?? "Unknown Driver",
               vanName: vehicle
-                ? `${vehicle.make || ""} ${vehicle.model || ""}`.trim() ||
+                ? `${vehicle.make ?? ""} ${vehicle.model ?? ""}`.trim() ||
                   vehicle.registration_number ||
                   null
                 : null,
@@ -182,8 +215,11 @@ export async function getDashboardData(
     // Fetch recent rosters
     const { data: recentRostersData, error: recentError } = await supabase
       .from("roster_assignments")
-      .select("id, week_start_date, status, version, last_modified_at, assignments")
+      .select(
+        "id, week_start_date, status, version, last_modified_at, assignments"
+      )
       .eq("organization_id", orgId)
+      .returns<RecentRosterRow[]>()
       .order("week_start_date", { ascending: false })
       .limit(recentLimit)
 
@@ -191,15 +227,16 @@ export async function getDashboardData(
       console.error("[dashboard] recentRosters error:", recentError)
     }
 
-    const recentRosters: DashboardRecentRoster[] = (
-      recentRostersData ?? []
-    ).map((roster: any) => ({
-      id: roster.id,
-      weekStart: roster.week_start_date,
-      status: roster.status,
-      assignmentsCount: Array.isArray(roster.assignments) ? roster.assignments.length : 0,
-      lastUpdated: roster.last_modified_at,
-    }))
+    const recentRosters: DashboardRecentRoster[] =
+      (recentRostersData as RecentRosterRow[] | null)?.map((roster) => ({
+        id: roster.id,
+        weekStart: roster.week_start_date,
+        status: roster.status,
+        assignmentsCount: Array.isArray(roster.assignments)
+          ? roster.assignments.length
+          : 0,
+        lastUpdated: roster.last_modified_at ?? roster.week_start_date,
+      })) ?? []
 
     const dashboardData: DashboardData = {
       quickStats,

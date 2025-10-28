@@ -1,4 +1,4 @@
-import { Calendar, Truck, Users, CalendarDays } from "lucide-react"
+import { Calendar, CalendarDays, Truck, Users } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DashboardQuickStats } from "@/lib/types/dashboard"

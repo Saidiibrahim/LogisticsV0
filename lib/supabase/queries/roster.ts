@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import type { Roster, RosterAssignment } from "@/lib/types/roster"
+import type { Roster } from "@/lib/types/roster"
+
+type RosterAssignmentRow = {
+  date: string
+  driverId: string
+  previousDriverId?: string | null
+  notifiedAt?: string | null
+  notificationId?: string | null
+}
 
 /**
  * Fetch a roster by week start date from the roster_assignments table.
@@ -23,19 +31,21 @@ export async function getRosterByWeek(
   if (!data) return null
 
   // Parse assignments from JSONB
-  const assignmentsArray = Array.isArray(data.assignments) ? data.assignments : []
+  const assignmentsArray = Array.isArray(data.assignments)
+    ? (data.assignments as RosterAssignmentRow[])
+    : []
 
   return {
     id: data.id,
     weekStart: data.week_start_date,
     status: data.status,
     version: data.version,
-    assignments: assignmentsArray.map((a: any) => ({
+    assignments: assignmentsArray.map((a) => ({
       date: a.date,
       driverId: a.driverId,
-      previousDriverId: a.previousDriverId,
-      notifiedAt: a.notifiedAt,
-      notificationId: a.notificationId,
+      previousDriverId: a.previousDriverId ?? undefined,
+      notifiedAt: a.notifiedAt ?? undefined,
+      notificationId: a.notificationId ?? undefined,
     })),
   }
 }
@@ -106,21 +116,21 @@ export async function upsertRosterWithAssignments(
     return null
   }
 
-  const assignmentsArray = Array.isArray(rosterRow.assignments) ? rosterRow.assignments : []
+  const assignmentsArray = Array.isArray(rosterRow.assignments)
+    ? (rosterRow.assignments as RosterAssignmentRow[])
+    : []
 
   return {
     id: rosterRow.id,
     status: rosterRow.status,
     version: rosterRow.version,
     weekStart: rosterRow.week_start_date,
-    assignments: assignmentsArray.map((a: any) => ({
+    assignments: assignmentsArray.map((a) => ({
       date: a.date,
       driverId: a.driverId,
-      previousDriverId: a.previousDriverId,
-      notifiedAt: a.notifiedAt,
-      notificationId: a.notificationId,
+      previousDriverId: a.previousDriverId ?? undefined,
+      notifiedAt: a.notifiedAt ?? undefined,
+      notificationId: a.notificationId ?? undefined,
     })),
   }
 }
-
-

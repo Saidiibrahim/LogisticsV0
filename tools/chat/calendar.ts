@@ -1,7 +1,6 @@
 import { tool } from "ai"
 import { z } from "zod"
 
-import type { EventType } from "@/lib/types/calendar"
 import type { CalendarWidgetData, WidgetToolResult } from "@/lib/types/chat"
 import type { ServerSupabaseClient } from "./types"
 

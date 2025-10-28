@@ -47,6 +47,15 @@ export function WeekView({ onEventClick }: WeekViewProps) {
     if (!filters.eventStatuses.includes(event.status)) {
       return false
     }
+    // Driver filter (if any drivers selected, only show events assigned to those drivers)
+    if (filters.driverIds.length > 0) {
+      if (
+        !event.assigned_driver_id ||
+        !filters.driverIds.includes(event.assigned_driver_id)
+      ) {
+        return false
+      }
+    }
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase()
       const matchesSearch =
@@ -161,8 +170,21 @@ export function WeekView({ onEventClick }: WeekViewProps) {
                       style={style}
                       type="button"
                     >
-                      <div className="font-semibold text-white">
-                        {format(event.start_time, "h:mm a")}
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="font-semibold text-white">
+                          {format(event.start_time, "h:mm a")}
+                        </div>
+                        {event.driver_name && (
+                          <div className="flex items-center gap-1 rounded bg-white/20 px-1.5 py-0.5">
+                            <div className="size-1.5 rounded-full bg-white" />
+                            <span className="text-white text-[10px] font-medium">
+                              {event.driver_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="truncate text-white">{event.title}</div>
                       {(event.location_name || event.location_address) && (

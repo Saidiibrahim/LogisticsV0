@@ -24,7 +24,7 @@
 
 import { openai } from "@ai-sdk/openai"
 import type { UIMessage } from "ai"
-import { convertToModelMessages, streamText } from "ai"
+import { convertToModelMessages, stepCountIs, streamText } from "ai"
 import { createClient } from "@/lib/supabase/server"
 import { createChatTools } from "@/tools/chat"
 
@@ -113,6 +113,7 @@ export async function POST(req: Request) {
       temperature: 0.7,
       // Tool definitions backed by Supabase queries
       tools,
+      stopWhen: stepCountIs(5), //Allow up to 5 sequential steps
     })
 
     /**

@@ -14,6 +14,7 @@
  * - Error handling with retry functionality
  * - Keyboard shortcuts (Cmd/Ctrl+K for focus, Esc to close widget)
  * - Accessibility support with reduced motion preferences
+ * - Polished UI using ai-elements components
  *
  * **Widget Detection Flow:**
  * 1. AI SDK streams response with tool invocations
@@ -36,15 +37,45 @@
 import { useChat } from "@ai-sdk/react"
 import { isToolUIPart, type UIMessage } from "ai"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { AlertCircle, GlobeIcon } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import {
-  type ChangeEvent,
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation"
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+} from "@/components/ai-elements/message"
+import {
+  PromptInput,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
+  PromptInputAttachment,
+  PromptInputAttachments,
+  PromptInputBody,
+  PromptInputButton,
+  PromptInputFooter,
+  type PromptInputMessage,
+  PromptInputModelSelect,
+  PromptInputModelSelectContent,
+  PromptInputModelSelectItem,
+  PromptInputModelSelectTrigger,
+  PromptInputModelSelectValue,
+  PromptInputSpeechButton,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@/components/ai-elements/prompt-input"
+import { Response } from "@/components/ai-elements/response"
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import {
   selectError,
   selectLayoutMode,
@@ -52,8 +83,6 @@ import {
 } from "@/lib/stores/chat-store"
 import type { WidgetToolResult, WidgetType } from "@/lib/types/chat"
 import { cn } from "@/lib/utils"
-import { ChatInput } from "./chat-input"
-import { ChatMessageList } from "./chat-message-list"
 import { ChatWidgetPanel } from "./chat-widget-panel"
 
 /**
@@ -73,6 +102,29 @@ const WIDGET_TITLES: Record<WidgetType, string> = {
  * @returns Display title for the widget
  */
 const getWidgetTitle = (type: WidgetType) => WIDGET_TITLES[type] ?? "Widget"
+
+const MODEL_OPTIONS = [
+  { id: "gpt-4", name: "GPT-4" },
+  { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo" },
+  { id: "claude-2", name: "Claude 2" },
+  { id: "claude-instant", name: "Claude Instant" },
+  { id: "palm-2", name: "PaLM 2" },
+  { id: "llama-2-70b", name: "Llama 2 70B" },
+  { id: "llama-2-13b", name: "Llama 2 13B" },
+  { id: "cohere-command", name: "Command" },
+  { id: "mistral-7b", name: "Mistral 7B" },
+]
+
+const DEFAULT_SUGGESTIONS = [
+  "What are the latest trends in AI?",
+  "How does machine learning work?",
+  "Explain quantum computing",
+  "Best practices for React development",
+  "Tell me about TypeScript benefits",
+  "How to optimize database queries?",
+  "What is the difference between SQL and NoSQL?",
+  "Explain cloud computing basics",
+]
 
 /**
  * Chat interface component.
@@ -97,11 +149,16 @@ export function ChatInterface() {
   const shouldReduceMotion = useReducedMotion()
 
   // Input field reference for focus management
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Local input state for PromptInput
+  const [text, setText] = useState("")
+  const [model, setModel] = useState(MODEL_OPTIONS[0]?.id ?? "gpt-4")
+  const [useWebSearch, setUseWebSearch] = useState(false)
 
   // Auto-focus input on mount
   useEffect(() => {
-    inputRef.current?.focus()
+    textareaRef.current?.focus()
   }, [])
 
   /**
@@ -198,7 +255,7 @@ export function ChatInterface() {
    *
    * @see {@link https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat|useChat API Reference}
    */
-  const { messages, status, regenerate, clearError, sendMessage } = useChat({
+  const { messages, status, sendMessage, clearError, stop } = useChat({
     /** Error handler for API or network errors */
     onError: (err) => {
       const message =
@@ -219,27 +276,6 @@ export function ChatInterface() {
     },
   })
 
-  // Local input state
-  const [input, setInput] = useState("")
-
-  // Derived loading state
-  const isLoading = useMemo(
-    () => status === "submitted" || status === "streaming",
-    [status]
-  )
-
-  /**
-   * Handles input field changes.
-   *
-   * @param event - Change event from textarea
-   */
-  const handleInputChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      setInput(event.target.value)
-    },
-    []
-  )
-
   /**
    * Dismisses the current error message.
    */
@@ -249,46 +285,36 @@ export function ChatInterface() {
   }, [clearError, setError])
 
   /**
-   * Retries the last failed message by regenerating the AI response.
-   * Clears any existing error before retrying.
-   */
-  const handleRetry = useCallback(async () => {
-    clearError()
-    setError(null)
-    try {
-      await regenerate()
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Retry failed. Please try again."
-      setError(message)
-    }
-  }, [clearError, regenerate, setError])
-
-  /**
-   * Handles form submission for sending messages.
+   * Handles message submission from PromptInput.
    *
    * **Flow:**
-   * 1. Prevents default form submission
-   * 2. Validates input is not empty
-   * 3. Clears any existing errors
-   * 4. Optimistically clears input field
-   * 5. Sends message via AI SDK
-   * 6. Restores input on error
-   * 7. Returns focus to input field
+   * 1. Validates message has text content
+   * 2. Clears any existing errors
+   * 3. Clears input field
+   * 4. Returns focus to input field
    *
-   * @param event - Form submit event
+   * @param message - PromptInputMessage from ai-elements
    */
-  const handleFormSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-
-      // Don't submit empty messages
-      if (!input.trim()) {
+  const handleSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      if (status === "streaming" || status === "submitted") {
+        try {
+          await stop()
+        } catch (err) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("[Chat] Failed to stop streaming response", err)
+          }
+        }
         return
       }
 
-      // Store message before clearing (for error recovery)
-      const pendingMessage = input
+      const trimmedText = message.text?.trim() ?? ""
+      const hasText = trimmedText.length > 0
+      const hasAttachments = Boolean(message.files?.length)
+
+      if (!hasText && !hasAttachments) {
+        return
+      }
 
       // Clear any previous errors
       if (error) {
@@ -296,26 +322,87 @@ export function ChatInterface() {
         setError(null)
       }
 
-      // Optimistically clear input
-      setInput("")
+      const previousText = message.text ?? ""
+
+      // Clear input (PromptInput handles sending via useChat internally)
+      setText("")
+
+      if (hasAttachments && message.files) {
+        const count = message.files.length
+        toast.success("Files attached", {
+          description: `${count} file${count === 1 ? "" : "s"} attached to message`,
+        })
+      }
 
       try {
-        await sendMessage({ text: pendingMessage })
+        const payload: Parameters<typeof sendMessage>[0] = {
+          text: hasText ? previousText : "",
+          ...(hasAttachments && message.files ? { files: message.files } : {}),
+        }
+
+        await sendMessage(payload)
       } catch (err) {
-        // Restore input on error so user can retry
-        setInput(pendingMessage)
+        setText(previousText)
         const message =
           err instanceof Error
             ? err.message
             : "Failed to send your message. Please try again."
         setError(message)
       } finally {
-        // Always return focus to input
-        inputRef.current?.focus()
+        // Return focus to input
+        textareaRef.current?.focus()
       }
     },
-    [clearError, error, input, sendMessage, setError]
+    [status, stop, error, clearError, sendMessage, setError]
   )
+
+  const handleSuggestionClick = useCallback(
+    async (suggestion: string) => {
+      if (status === "streaming" || status === "submitted") {
+        try {
+          await stop()
+        } catch (err) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("[Chat] Failed to stop streaming response", err)
+          }
+        }
+        return
+      }
+
+      if (error) {
+        clearError()
+        setError(null)
+      }
+
+      setText("")
+
+      try {
+        await sendMessage({ text: suggestion })
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to send your message. Please try again."
+        setError(message)
+      } finally {
+        textareaRef.current?.focus()
+      }
+    },
+    [status, stop, error, clearError, sendMessage, setError]
+  )
+
+  /**
+   * Helper to extract text content from a message.
+   *
+   * @param message - UIMessage from AI SDK
+   * @returns Text content string
+   */
+  const extractTextContent = useCallback((message: UIMessage) => {
+    return message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => (part as { type: "text"; text: string }).text)
+      .join("")
+  }, [])
 
   /**
    * Keyboard shortcut handlers.
@@ -329,7 +416,7 @@ export function ChatInterface() {
       // Cmd/Ctrl + K to focus input
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault()
-        inputRef.current?.focus()
+        textareaRef.current?.focus()
       }
 
       // Escape to close widget
@@ -342,6 +429,8 @@ export function ChatInterface() {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [activeWidget, closeWidget])
+
+  const isChatBusy = status === "streaming" || status === "submitted"
 
   return (
     <div
@@ -358,14 +447,64 @@ export function ChatInterface() {
           <div className="grid h-full grid-cols-1 gap-0 lg:grid-cols-2">
             <div className="flex h-full flex-col border-r">
               <div className="flex-1 overflow-hidden">
-                <div className="mx-auto h-full max-w-3xl px-4">
-                  <ChatMessageList
-                    messages={messages}
-                    isLoading={isLoading}
-                    error={error}
-                    onDismissError={error ? handleDismissError : undefined}
-                    onRetry={error ? handleRetry : undefined}
-                  />
+                <div className="mx-auto h-full max-w-3xl">
+                  <Conversation className="h-full">
+                    <ConversationContent>
+                      {/* Error banner */}
+                      {error && (
+                        <Alert variant="destructive" className="mb-4">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Error</AlertTitle>
+                          <AlertDescription className="flex items-center justify-between gap-2">
+                            <span>{error}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleDismissError}
+                            >
+                              Dismiss
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* Empty state */}
+                      {messages.length === 0 && (
+                        <div className="flex h-full items-center justify-center">
+                          <div className="text-center">
+                            <h2 className="text-2xl font-semibold">
+                              Start a conversation
+                            </h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Ask anything about your deliveries, routes, or
+                              driver performance.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Messages */}
+                      {messages.map((message) => (
+                        <Message
+                          key={message.id}
+                          from={message.role === "user" ? "user" : "assistant"}
+                        >
+                          <MessageContent>
+                            <Response>{extractTextContent(message)}</Response>
+                          </MessageContent>
+                          <MessageAvatar
+                            name={message.role === "user" ? "You" : "Assistant"}
+                            src={
+                              message.role === "user"
+                                ? "https://github.com/haydenbleasel.png"
+                                : "https://github.com/openai.png"
+                            }
+                          />
+                        </Message>
+                      ))}
+                    </ConversationContent>
+                    <ConversationScrollButton />
+                  </Conversation>
                 </div>
               </div>
             </div>
@@ -394,14 +533,64 @@ export function ChatInterface() {
         ) : (
           <div className="flex h-full flex-col">
             <div className="flex-1">
-              <div className="mx-auto h-full max-w-3xl px-4">
-                <ChatMessageList
-                  messages={messages}
-                  isLoading={isLoading}
-                  error={error}
-                  onDismissError={error ? handleDismissError : undefined}
-                  onRetry={error ? handleRetry : undefined}
-                />
+              <div className="mx-auto h-full max-w-3xl">
+                <Conversation className="h-full">
+                  <ConversationContent>
+                    {/* Error banner */}
+                    {error && (
+                      <Alert variant="destructive" className="mb-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription className="flex items-center justify-between gap-2">
+                          <span>{error}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleDismissError}
+                          >
+                            Dismiss
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Empty state */}
+                    {messages.length === 0 && (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="text-center">
+                          <h2 className="text-2xl font-semibold">
+                            Start a conversation
+                          </h2>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Ask anything about your deliveries, routes, or
+                            driver performance.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Messages */}
+                    {messages.map((message) => (
+                      <Message
+                        key={message.id}
+                        from={message.role === "user" ? "user" : "assistant"}
+                      >
+                        <MessageContent>
+                          <Response>{extractTextContent(message)}</Response>
+                        </MessageContent>
+                        <MessageAvatar
+                          name={message.role === "user" ? "You" : "Assistant"}
+                          src={
+                            message.role === "user"
+                              ? "https://github.com/haydenbleasel.png"
+                              : "https://github.com/openai.png"
+                          }
+                        />
+                      </Message>
+                    ))}
+                  </ConversationContent>
+                  <ConversationScrollButton />
+                </Conversation>
               </div>
             </div>
           </div>
@@ -414,14 +603,86 @@ export function ChatInterface() {
             layoutMode === "split" && "lg:border-r lg:border-border/50"
           )}
         >
-          <ChatInput
-            ref={inputRef}
-            input={input}
-            handleInputChange={handleInputChange}
-            handleSubmit={handleFormSubmit}
-            isLoading={isLoading}
-            error={error}
-          />
+          <div className="sticky bottom-0 bg-background/80 px-4 py-6 backdrop-blur-sm">
+            <div className="mx-auto max-w-3xl space-y-4">
+              <Suggestions className="flex flex-wrap gap-2">
+                {DEFAULT_SUGGESTIONS.map((suggestion) => (
+                  <Suggestion
+                    key={suggestion}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    suggestion={suggestion}
+                  />
+                ))}
+              </Suggestions>
+              <PromptInput
+                globalDrop
+                multiple
+                onSubmit={handleSubmit}
+                className="rounded-xl border border-border/50 bg-background/60 shadow-sm transition-colors"
+              >
+                <PromptInputBody>
+                  <PromptInputAttachments className="px-3">
+                    {(attachment) => (
+                      <PromptInputAttachment
+                        key={attachment.id}
+                        data={attachment}
+                      />
+                    )}
+                  </PromptInputAttachments>
+                  <PromptInputTextarea
+                    ref={textareaRef}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="What would you like to know?"
+                    disabled={Boolean(error)}
+                  />
+                </PromptInputBody>
+                <PromptInputFooter>
+                  <PromptInputTools className="gap-2">
+                    <PromptInputActionMenu>
+                      <PromptInputActionMenuTrigger />
+                      <PromptInputActionMenuContent>
+                        <PromptInputActionAddAttachments />
+                      </PromptInputActionMenuContent>
+                    </PromptInputActionMenu>
+                    <PromptInputSpeechButton
+                      onTranscriptionChange={setText}
+                      textareaRef={textareaRef}
+                    />
+                    <PromptInputButton
+                      onClick={() => setUseWebSearch((prev) => !prev)}
+                      variant={useWebSearch ? "default" : "ghost"}
+                    >
+                      <GlobeIcon size={16} />
+                      <span>Search</span>
+                    </PromptInputButton>
+                    <PromptInputModelSelect
+                      onValueChange={setModel}
+                      value={model}
+                    >
+                      <PromptInputModelSelectTrigger>
+                        <PromptInputModelSelectValue />
+                      </PromptInputModelSelectTrigger>
+                      <PromptInputModelSelectContent>
+                        {MODEL_OPTIONS.map((option) => (
+                          <PromptInputModelSelectItem
+                            key={option.id}
+                            value={option.id}
+                          >
+                            {option.name}
+                          </PromptInputModelSelectItem>
+                        ))}
+                      </PromptInputModelSelectContent>
+                    </PromptInputModelSelect>
+                  </PromptInputTools>
+                  <PromptInputSubmit
+                    disabled={Boolean(error) || (!text.trim() && !isChatBusy)}
+                    status={status}
+                  />
+                </PromptInputFooter>
+              </PromptInput>
+            </div>
+          </div>
         </div>
         {layoutMode === "split" && (
           <div className="hidden bg-muted/30 lg:block" />

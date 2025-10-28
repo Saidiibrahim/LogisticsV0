@@ -67,30 +67,22 @@ export default async function AuthenticatedLayout({
   children,
 }: AuthenticatedLayoutProps) {
   // Fetch session claims (cached, deduplicated across this render tree)
-  const [claimsResult, userResult] = await Promise.all([
+  const [session, userResult] = await Promise.all([
     getSessionClaims(),
     getUserProfile(),
   ])
 
-  const { data, error } = claimsResult
-
-  // Redirect unauthenticated users to login
-  if (error || !data?.claims) {
+  if (!session) {
     redirect("/auth/login")
   }
 
-  // Extract email from JWT claims for display in UI
-  const userEmail =
-    typeof data.claims.email === "string" ? data.claims.email : undefined
+  const authUser = userResult.data?.user
 
-  const userMetadata = (userResult.data?.user?.user_metadata ?? {}) as Record<
+  const userMetadata = (authUser?.user_metadata ?? {}) as Record<
     string,
     unknown
   >
-  const appMetadata = (userResult.data?.user?.app_metadata ?? {}) as Record<
-    string,
-    unknown
-  >
+  const appMetadata = (authUser?.app_metadata ?? {}) as Record<string, unknown>
 
   const pickString = (...values: unknown[]) => {
     for (const value of values) {
@@ -108,8 +100,10 @@ export default async function AuthenticatedLayout({
   const userName = pickString(
     userMetadata.full_name,
     userMetadata.name,
-    data.claims.name
+    session.fullName
   )
+
+  const userEmail = pickString(session.email, authUser?.email)
 
   const subscriptionTier = pickString(
     userMetadata.subscription_tier,
@@ -120,6 +114,7 @@ export default async function AuthenticatedLayout({
 
   return (
     <AppChrome
+      session={session}
       subscriptionTier={subscriptionTier}
       userEmail={userEmail}
       userName={userName}

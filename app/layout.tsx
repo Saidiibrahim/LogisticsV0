@@ -40,9 +40,7 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
         <WebVitalsReporter />
         <Analytics />

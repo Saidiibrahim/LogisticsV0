@@ -2,7 +2,6 @@
 
 import { format, parseISO } from "date-fns"
 import { Resend } from "resend"
-import type { RosterAssignment } from "@/lib/types/roster"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -26,16 +25,6 @@ export async function sendRosterNotification(
   }
 
   try {
-    const formattedDates = assignments
-      .map((date) => {
-        try {
-          return format(parseISO(date), "EEEE, MMMM d")
-        } catch {
-          return date
-        }
-      })
-      .join("\n")
-
     const weekStartFormatted = format(parseISO(weekStart), "MMMM d, yyyy")
 
     const { data, error } = await resend.emails.send({

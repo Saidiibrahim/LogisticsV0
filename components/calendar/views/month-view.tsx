@@ -42,8 +42,16 @@ function EventItem({ event, onClick }: EventItemProps) {
       )}
       type="button"
     >
-      <div className="flex items-center gap-1 text-white">
+      <div className="flex items-center justify-between gap-1 text-white">
         <span className="truncate font-medium">{event.title}</span>
+        {event.driver_name && (
+          <span className="shrink-0 rounded bg-white/20 px-1 text-[10px] font-medium">
+            {event.driver_name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
+          </span>
+        )}
       </div>
     </button>
   )
@@ -80,6 +88,16 @@ export function MonthView({ onEventClick }: MonthViewProps) {
     // Status filter
     if (!filters.eventStatuses.includes(event.status)) {
       return false
+    }
+
+    // Driver filter (if any drivers selected, only show events assigned to those drivers)
+    if (filters.driverIds.length > 0) {
+      if (
+        !event.assigned_driver_id ||
+        !filters.driverIds.includes(event.assigned_driver_id)
+      ) {
+        return false
+      }
     }
 
     // Search filter

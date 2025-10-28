@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import {
   Calendar,
   Clock,
+  Edit,
   FileText,
   Loader2,
   MapPin,
@@ -13,7 +14,11 @@ import {
   Users,
 } from "lucide-react"
 import { useState, useTransition } from "react"
-import { deleteEvent } from "@/app/(authenticated)/calendar/actions"
+import {
+  deleteEvent,
+  updateEventStatus,
+} from "@/app/(authenticated)/calendar/actions"
+import { CanAccess } from "@/components/auth"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,12 +38,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { useUser } from "@/hooks/use-user"
 import {
   type CalendarEvent,
   eventStatusStyles,
   eventTypeColors,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
+import { EditEventDialog } from "./edit-event-dialog"
 
 /**
  * Props for the event details dialog that appears when the user drills into an
@@ -60,12 +67,21 @@ export function EventDetailsDialog({
   onOpenChange,
 }: EventDetailsDialogProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const { userId, hasPermission } = useUser()
 
   if (!event) return null
 
   const typeColor = eventTypeColors[event.type]
   const statusStyle = eventStatusStyles[event.status]
+  const canManageAnyStatus = hasPermission("events.status.update.any")
+  const canManageOwnStatus =
+    hasPermission("events.status.update.own") &&
+    event.assigned_driver_id === userId
+  const showStatusControls = canManageAnyStatus || canManageOwnStatus
+  const canEditEvent = hasPermission("events.edit.any")
+  const canDeleteEvent = hasPermission("events.delete")
 
   // Choose a contextual icon based on the event type
   const getTypeIcon = () => {
@@ -97,6 +113,14 @@ export function EventDetailsDialog({
     })
   }
 
+  const handleStatusChange = (
+    newStatus: "scheduled" | "in-progress" | "completed" | "cancelled"
+  ) => {
+    startTransition(async () => {
+      await updateEventStatus(event.id, newStatus)
+    })
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,15 +142,71 @@ export function EventDetailsDialog({
                 </Badge>
                 <Badge variant="outline" className="capitalize">
                   {getTypeIcon()}
-                  <span className="ml-1">
-                    {event.type.replace("-", " ")}
-                  </span>
+                  <span className="ml-1">{event.type.replace("-", " ")}</span>
                 </Badge>
               </div>
             </div>
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* Quick Status Change */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground text-sm">
+                Quick Status:
+              </span>
+              {showStatusControls ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={
+                      event.status === "scheduled" ? "default" : "outline"
+                    }
+                    onClick={() => handleStatusChange("scheduled")}
+                    disabled={isPending || event.status === "scheduled"}
+                    className="h-7"
+                  >
+                    Scheduled
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      event.status === "in-progress" ? "default" : "outline"
+                    }
+                    onClick={() => handleStatusChange("in-progress")}
+                    disabled={isPending || event.status === "in-progress"}
+                    className="h-7"
+                  >
+                    In Progress
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      event.status === "completed" ? "default" : "outline"
+                    }
+                    onClick={() => handleStatusChange("completed")}
+                    disabled={isPending || event.status === "completed"}
+                    className="h-7"
+                  >
+                    Completed
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      event.status === "cancelled" ? "destructive" : "outline"
+                    }
+                    onClick={() => handleStatusChange("cancelled")}
+                    disabled={isPending || event.status === "cancelled"}
+                    className="h-7"
+                  >
+                    Cancelled
+                  </Button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">View only</span>
+              )}
+            </div>
+
+            <Separator />
             {/* Date and Time */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -230,7 +310,11 @@ export function EventDetailsDialog({
                     <div className="font-medium">Tags</div>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {event.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -258,16 +342,34 @@ export function EventDetailsDialog({
             )}
 
             {/* Actions */}
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete Event
-              </Button>
-            </div>
+            {(canEditEvent || canDeleteEvent) && (
+              <div className="flex justify-end gap-2">
+                <CanAccess permission="events.edit.any">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowEditDialog(true)
+                      onOpenChange(false)
+                    }}
+                  >
+                    <Edit className="mr-2 size-4" />
+                    Edit Event
+                  </Button>
+                </CanAccess>
+
+                <CanAccess permission="events.delete">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    Delete Event
+                  </Button>
+                </CanAccess>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -294,6 +396,18 @@ export function EventDetailsDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditEventDialog
+        event={event}
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open)
+          if (!open) {
+            // Re-open the details dialog when edit dialog closes
+            onOpenChange(true)
+          }
+        }}
+      />
     </>
   )
 }

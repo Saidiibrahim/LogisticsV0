@@ -34,7 +34,8 @@ const plans = [
     name: "CourierRun Pro",
     price: "$42",
     cadence: "per month",
-    description: "Full platform access for logistics teams and fleet coordinators.",
+    description:
+      "Full platform access for logistics teams and fleet coordinators.",
     cta: "Upgrade to Pro",
     highlight: true,
     features: [
@@ -82,8 +83,8 @@ export default function PricingPage() {
               Choose the plan that fits your fleet
             </h1>
             <p className="text-sm text-neutral-400 sm:text-base">
-              Placeholder content for pricing copy. Highlight how CourierRun adapts
-              to enterprise fleets and small logistics operations.
+              Placeholder content for pricing copy. Highlight how CourierRun
+              adapts to enterprise fleets and small logistics operations.
             </p>
           </div>
 

@@ -17,7 +17,8 @@ export default function Page() {
               Logistics made simple.
             </h1>
             <p className="text-base text-muted-foreground">
-              Sign in to manage shifts, track driver schedules, and keep your fleet running smoothly.
+              Sign in to manage shifts, track driver schedules, and keep your
+              fleet running smoothly.
             </p>
           </header>
           <LoginForm className="mx-auto w-full max-w-sm lg:mx-0" />

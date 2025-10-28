@@ -1,12 +1,11 @@
+import { format, parseISO } from "date-fns"
 import { Calendar, CheckCircle2, Clock, Edit3, FileText } from "lucide-react"
 import Link from "next/link"
-
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DashboardRecentRoster } from "@/lib/types/dashboard"
 import { cn } from "@/lib/utils"
-import { format, parseISO } from "date-fns"
 
 /**
  * Properties for the `RecentRostersSection` component.
@@ -54,7 +53,11 @@ function formatLastUpdated(isoDate: string): string {
 function getStatusBadge(status: string) {
   switch (status) {
     case "published":
-      return { variant: "default" as const, label: "Published", icon: CheckCircle2 }
+      return {
+        variant: "default" as const,
+        label: "Published",
+        icon: CheckCircle2,
+      }
     case "draft":
       return { variant: "secondary" as const, label: "Draft", icon: Edit3 }
     case "modified":
@@ -83,13 +86,18 @@ function RecentRosterCard({ roster }: { roster: DashboardRecentRoster }) {
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm">{formatWeekDate(roster.weekStart)}</span>
+            <span className="font-medium text-sm">
+              {formatWeekDate(roster.weekStart)}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-xs">
             <div className="flex items-center gap-1">
               <FileText className="h-3 w-3" />
-              <span>{roster.assignmentsCount} assignment{roster.assignmentsCount !== 1 ? "s" : ""}</span>
+              <span>
+                {roster.assignmentsCount} assignment
+                {roster.assignmentsCount !== 1 ? "s" : ""}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -156,8 +164,8 @@ export function RecentRostersSection({
             <div className="space-y-1">
               <h3 className="font-semibold text-lg">No rosters yet</h3>
               <p className="max-w-sm text-muted-foreground text-sm">
-                You haven&apos;t created any rosters yet. Start by creating a weekly
-                roster to manage driver assignments.
+                You haven&apos;t created any rosters yet. Start by creating a
+                weekly roster to manage driver assignments.
               </p>
             </div>
             <Button asChild>

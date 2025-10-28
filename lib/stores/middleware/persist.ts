@@ -78,25 +78,30 @@ const removeCookie = (name: string) => {
 }
 
 /**
+ * Creates a raw cookie storage implementation (for testing).
+ */
+export const createRawCookieStorage = (options: CookieStorageOptions = {}) => ({
+  getItem: (name: string) => {
+    const value = readCookie(name)
+    return value ?? null
+  },
+  setItem: (name: string, value: string) => {
+    try {
+      writeCookie(name, value, options)
+    } catch (error) {
+      console.warn(`[zustand] Failed to write cookie for ${name}`, error)
+    }
+  },
+  removeItem: (name: string) => {
+    removeCookie(name)
+  },
+})
+
+/**
  * Creates a Zustand-compatible JSON storage that persists state via cookies instead of localStorage.
  */
 export const createCookieStorage = (options: CookieStorageOptions = {}) => {
-  return createJSONStorage(() => ({
-    getItem: (name) => {
-      const value = readCookie(name)
-      return value ?? null
-    },
-    setItem: (name, value) => {
-      try {
-        writeCookie(name, value, options)
-      } catch (error) {
-        console.warn(`[zustand] Failed to write cookie for ${name}`, error)
-      }
-    },
-    removeItem: (name) => {
-      removeCookie(name)
-    },
-  }))
+  return createJSONStorage(() => createRawCookieStorage(options))
 }
 
 /**

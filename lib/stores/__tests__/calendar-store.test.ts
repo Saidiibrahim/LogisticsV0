@@ -48,6 +48,14 @@ describe("useCalendarStore", () => {
     const state = useCalendarStore.getState()
     expect(state.currentView).toBe("month")
     expect(state.events).toEqual([])
-    expect(state.filters.eventTypes).toEqual(["delivery", "pickup", "meeting", "break", "maintenance", "collection", "retail"])
+    expect(state.filters.eventTypes).toEqual([
+      "delivery",
+      "pickup",
+      "meeting",
+      "break",
+      "maintenance",
+      "collection",
+      "retail",
+    ])
   })
 })

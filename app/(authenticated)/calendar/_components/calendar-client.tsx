@@ -9,11 +9,11 @@ import { ListView } from "@/components/calendar/views/list-view"
 import { MonthView } from "@/components/calendar/views/month-view"
 import { TimelineView } from "@/components/calendar/views/timeline-view"
 import { WeekView } from "@/components/calendar/views/week-view"
+import { WeeklyRosterDialog } from "@/components/calendar/weekly-roster-dialog"
+import { Button } from "@/components/ui/button"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
 import type { CalendarEvent } from "@/lib/types/calendar"
 import { CreateEventDialog } from "./create-event-dialog"
-import { Button } from "@/components/ui/button"
-import { WeeklyRosterDialog } from "@/components/calendar/weekly-roster-dialog"
 
 /**
  * Props accepted by the client calendar shell. The server preloads events and
@@ -66,7 +66,11 @@ export function CalendarClient({ initialEvents }: CalendarClientProps) {
       <div className="flex items-center justify-between gap-4 border-b bg-background px-6 py-4">
         <CalendarHeader />
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => setRosterOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setRosterOpen(true)}
+          >
             Weekly Roster
           </Button>
           <CreateEventDialog />

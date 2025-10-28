@@ -136,7 +136,9 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
                           {(event.location_name || event.location_address) && (
                             <div className="flex items-center gap-2 text-muted-foreground text-sm">
                               <MapPin className="size-4 shrink-0" />
-                              <span>{event.location_name || event.location_address}</span>
+                              <span>
+                                {event.location_name || event.location_address}
+                              </span>
                             </div>
                           )}
 
@@ -144,9 +146,7 @@ export function AgendaView({ onEventClick }: AgendaViewProps) {
                           {event.driver_name && (
                             <div className="flex items-center gap-2 text-muted-foreground text-sm sm:col-span-2">
                               <Users className="size-4 shrink-0" />
-                              <span>
-                                Driver: {event.driver_name}
-                              </span>
+                              <span>Driver: {event.driver_name}</span>
                             </div>
                           )}
                         </div>

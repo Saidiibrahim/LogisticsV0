@@ -1,4 +1,4 @@
-import { Calendar, Map, Package, Plus } from "lucide-react"
+import { Calendar, Map as MapIcon, Package, Plus } from "lucide-react"
 import Link from "next/link"
 import type { ComponentType } from "react"
 
@@ -32,7 +32,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     variant: "outline",
   },
   {
-    icon: Map,
+    icon: MapIcon,
     label: "Routes",
     href: "/calendar",
     variant: "outline",
@@ -62,7 +62,7 @@ export function QuickActionsCard() {
 
             return (
               <Button
-                key={action.href}
+                key={`${action.label}-${action.href}`}
                 variant={action.variant}
                 className="justify-start"
                 asChild

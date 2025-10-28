@@ -18,10 +18,7 @@
  *
  * @see {@link WidgetConfig} for widget configuration structure
  */
-export type WidgetType =
-  | "calendar"
-  | "driver-performance"
-  | "performance-chart"
+export type WidgetType = "calendar" | "driver-performance" | "performance-chart"
 
 /**
  * Layout modes for the chat interface.
@@ -102,7 +99,6 @@ export interface CalendarWidgetData {
   }>
 }
 
-
 /**
  * Driver performance widget data structure.
  *
@@ -156,10 +152,7 @@ export interface DriverPerformanceWidgetData {
  * @see {@link CalendarWidgetData}
  * @see {@link DriverPerformanceWidgetData}
  */
-export type WidgetData =
-  | CalendarWidgetData
-  | DriverPerformanceWidgetData
-  | null
+export type WidgetData = CalendarWidgetData | DriverPerformanceWidgetData | null
 
 /**
  * Tool result data structure returned by AI SDK tool execution.
