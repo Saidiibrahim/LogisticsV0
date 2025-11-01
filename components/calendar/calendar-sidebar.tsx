@@ -90,7 +90,7 @@ export function CalendarSidebar() {
   )
 
   return (
-    <div className="w-full space-y-6 border-r bg-background p-4 lg:w-72">
+    <div className="w-full space-y-6 border-r bg-background p-4 lg:w-72 overflow-y-auto h-full">
       {/* Mini Calendar */}
       <div className="space-y-2">
         <h3 className="font-semibold text-sm">Calendar</h3>

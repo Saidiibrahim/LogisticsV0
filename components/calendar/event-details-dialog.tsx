@@ -2,7 +2,9 @@
 
 import { format } from "date-fns"
 import {
+  AlertCircle,
   Calendar,
+  CheckCircle2,
   Clock,
   Edit,
   FileText,
@@ -12,8 +14,9 @@ import {
   Trophy,
   User,
   Users,
+  XCircle,
 } from "lucide-react"
-import { useState, useTransition } from "react"
+import { useId, useState, useTransition } from "react"
 import {
   deleteEvent,
   updateEventStatus,
@@ -37,15 +40,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/hooks/use-user"
 import {
   type CalendarEvent,
-  eventStatusStyles,
+  type EventResolutionType,
+  type EventStatus,
   eventTypeColors,
 } from "@/lib/types/calendar"
 import { cn } from "@/lib/utils"
 import { EditEventDialog } from "./edit-event-dialog"
+
+const STATUS_LABELS: Record<EventStatus, string> = {
+  scheduled: "Scheduled",
+  "in-progress": "In Progress",
+  completed: "Completed",
+  cancelled: "Cancelled",
+}
 
 /**
  * Props for the event details dialog that appears when the user drills into an
@@ -68,18 +89,31 @@ export function EventDetailsDialog({
 }: EventDetailsDialogProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showResolutionDialog, setShowResolutionDialog] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<EventStatus | null>(null)
+  const [pendingStatus, setPendingStatus] = useState<EventStatus | null>(null)
+  const [resolutionType, setResolutionType] =
+    useState<EventResolutionType>("done")
+  const [resolutionNotes, setResolutionNotes] = useState("")
   const [isPending, startTransition] = useTransition()
+  const resolutionBaseId = useId()
+  const resolutionTypeId = `${resolutionBaseId}-type`
+  const resolutionNotesId = `${resolutionBaseId}-notes`
+  const { toast } = useToast()
   const { userId, hasPermission } = useUser()
 
   if (!event) return null
 
   const typeColor = eventTypeColors[event.type]
-  const statusStyle = eventStatusStyles[event.status]
   const canManageAnyStatus = hasPermission("events.status.update.any")
   const canManageOwnStatus =
     hasPermission("events.status.update.own") &&
     event.assigned_driver_id === userId
   const showStatusControls = canManageAnyStatus || canManageOwnStatus
+  const isTerminalStatus =
+    event.status === "completed" || event.status === "cancelled"
+  const canUpdateStatus = showStatusControls && !isTerminalStatus
   const canEditEvent = hasPermission("events.edit.any")
   const canDeleteEvent = hasPermission("events.delete")
 
@@ -113,12 +147,96 @@ export function EventDetailsDialog({
     })
   }
 
-  const handleStatusChange = (
-    newStatus: "scheduled" | "in-progress" | "completed" | "cancelled"
-  ) => {
-    startTransition(async () => {
-      await updateEventStatus(event.id, newStatus)
-    })
+  const resetResolutionState = () => {
+    setShowResolutionDialog(false)
+    setPendingStatus(null)
+    setResolutionNotes("")
+    setResolutionType("done")
+  }
+
+  const handleStatusUpdate = async (newStatus: EventStatus) => {
+    if (isUpdatingStatus) return
+
+    const isTerminalTarget =
+      newStatus === "completed" || newStatus === "cancelled"
+
+    if (isTerminalTarget) {
+      setPendingStatus(newStatus)
+      setResolutionType(newStatus === "completed" ? "done" : "wont_do")
+      setResolutionNotes("")
+      setShowResolutionDialog(true)
+      return
+    }
+
+    setIsUpdatingStatus(true)
+    setUpdatingStatus(newStatus)
+    try {
+      const result = await updateEventStatus(event.id, newStatus)
+      if (result.success) {
+        toast({
+          title: "Status updated",
+          description: `Event marked as ${STATUS_LABELS[newStatus].toLowerCase()}.`,
+        })
+      } else if (result.error) {
+        toast({
+          title: "Unable to update status",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[calendar] Unexpected status update error:", error)
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong while updating the status.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdatingStatus(false)
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleResolutionConfirm = async () => {
+    if (!pendingStatus) {
+      return
+    }
+
+    setIsUpdatingStatus(true)
+    setUpdatingStatus(pendingStatus)
+
+    try {
+      const result = await updateEventStatus(event.id, pendingStatus, {
+        resolutionType,
+        resolutionNotes: resolutionNotes.trim() || undefined,
+      })
+
+      if (result.success) {
+        toast({
+          title: "Status updated",
+          description: `Event marked as ${STATUS_LABELS[
+            pendingStatus
+          ].toLowerCase()}.`,
+        })
+        resetResolutionState()
+      } else if (result.error) {
+        toast({
+          title: "Unable to update status",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[calendar] Unexpected resolution error:", error)
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong while capturing the resolution.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdatingStatus(false)
+      setUpdatingStatus(null)
+    }
   }
 
   return (
@@ -133,13 +251,8 @@ export function EventDetailsDialog({
                   <DialogTitle className="text-2xl">{event.title}</DialogTitle>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Badge
-                  variant="secondary"
-                  className={cn("capitalize", statusStyle.className)}
-                >
-                  {statusStyle.label}
-                </Badge>
+              <div className="flex flex-col items-end gap-2">
+                <StatusBadge status={event.status} />
                 <Badge variant="outline" className="capitalize">
                   {getTypeIcon()}
                   <span className="ml-1">{event.type.replace("-", " ")}</span>
@@ -150,59 +263,93 @@ export function EventDetailsDialog({
 
           <div className="space-y-6">
             {/* Quick Status Change */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-sm">
-                Quick Status:
-              </span>
-              {showStatusControls ? (
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-sm">
+                  Quick Status:
+                </span>
+                <StatusBadge status={event.status} />
+              </div>
+              {canUpdateStatus ? (
+                <div className="flex flex-wrap gap-2">
+                  {event.status !== "scheduled" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdatingStatus}
+                      onClick={() => handleStatusUpdate("scheduled")}
+                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                    >
+                      {isUpdatingStatus && updatingStatus === "scheduled" ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Clock className="mr-2 size-4" />
+                      )}
+                      {isUpdatingStatus && updatingStatus === "scheduled"
+                        ? "Updating..."
+                        : "Reset to Scheduled"}
+                    </Button>
+                  )}
+
+                  {event.status !== "in-progress" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdatingStatus}
+                      onClick={() => handleStatusUpdate("in-progress")}
+                      className="border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+                    >
+                      {isUpdatingStatus && updatingStatus === "in-progress" ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <AlertCircle className="mr-2 size-4" />
+                      )}
+                      {isUpdatingStatus && updatingStatus === "in-progress"
+                        ? "Updating..."
+                        : "Start Progress"}
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
-                    variant={
-                      event.status === "scheduled" ? "default" : "outline"
-                    }
-                    onClick={() => handleStatusChange("scheduled")}
-                    disabled={isPending || event.status === "scheduled"}
-                    className="h-7"
+                    variant="outline"
+                    disabled={isUpdatingStatus}
+                    onClick={() => handleStatusUpdate("cancelled")}
+                    className="border-red-200 text-red-600 hover:bg-red-50"
                   >
-                    Scheduled
+                    {isUpdatingStatus && updatingStatus === "cancelled" ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : (
+                      <XCircle className="mr-2 size-4" />
+                    )}
+                    {isUpdatingStatus && updatingStatus === "cancelled"
+                      ? "Updating..."
+                      : "Cancel"}
                   </Button>
+
                   <Button
                     size="sm"
-                    variant={
-                      event.status === "in-progress" ? "default" : "outline"
-                    }
-                    onClick={() => handleStatusChange("in-progress")}
-                    disabled={isPending || event.status === "in-progress"}
-                    className="h-7"
+                    variant="outline"
+                    disabled={isUpdatingStatus}
+                    onClick={() => handleStatusUpdate("completed")}
+                    className="border-green-200 text-green-600 hover:bg-green-50"
                   >
-                    In Progress
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      event.status === "completed" ? "default" : "outline"
-                    }
-                    onClick={() => handleStatusChange("completed")}
-                    disabled={isPending || event.status === "completed"}
-                    className="h-7"
-                  >
-                    Completed
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      event.status === "cancelled" ? "destructive" : "outline"
-                    }
-                    onClick={() => handleStatusChange("cancelled")}
-                    disabled={isPending || event.status === "cancelled"}
-                    className="h-7"
-                  >
-                    Cancelled
+                    {isUpdatingStatus && updatingStatus === "completed" ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 size-4" />
+                    )}
+                    {isUpdatingStatus && updatingStatus === "completed"
+                      ? "Updating..."
+                      : "Mark as Resolved"}
                   </Button>
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">View only</span>
+                <span className="text-xs text-muted-foreground">
+                  {isTerminalStatus
+                    ? "Status updates are disabled because this event is already resolved."
+                    : "View only"}
+                </span>
               )}
             </div>
 
@@ -373,6 +520,93 @@ export function EventDetailsDialog({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={showResolutionDialog}
+        onOpenChange={(open) => {
+          setShowResolutionDialog(open)
+          if (!open) {
+            resetResolutionState()
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingStatus === "cancelled" ? "Cancel Event" : "Resolve Event"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Please provide details about this update so the team has the full
+              context.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor={resolutionTypeId}>
+                Resolution Type
+              </label>
+              <Select
+                value={resolutionType}
+                onValueChange={(value) =>
+                  setResolutionType(value as EventResolutionType)
+                }
+              >
+                <SelectTrigger id={resolutionTypeId}>
+                  <SelectValue placeholder="Select a resolution" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="done">
+                    Done — Completed successfully
+                  </SelectItem>
+                  <SelectItem value="wont_do">
+                    Won&apos;t do — Cannot complete
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium"
+                htmlFor={resolutionNotesId}
+              >
+                Notes (Optional)
+              </label>
+              <Textarea
+                id={resolutionNotesId}
+                placeholder="Add any additional details for dispatch..."
+                value={resolutionNotes}
+                onChange={(event) => setResolutionNotes(event.target.value)}
+                className="min-h-[96px]"
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={resetResolutionState}
+              disabled={isUpdatingStatus}
+            >
+              Never mind
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResolutionConfirm}
+              disabled={isUpdatingStatus}
+              className="min-w-[120px]"
+            >
+              {isUpdatingStatus && pendingStatus ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

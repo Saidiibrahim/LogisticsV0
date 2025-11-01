@@ -57,6 +57,9 @@ async function getCalendarEvents(): Promise<CalendarEvent[]> {
       created_at,
       created_by,
       organization_id,
+      resolution_type,
+      resolution_notes,
+      resolved_at,
       driver:assigned_driver_id(full_name)
     `
     )
@@ -120,6 +123,9 @@ async function getCalendarEvents(): Promise<CalendarEvent[]> {
         created_by: event.created_by,
         created_at: new Date(event.created_at),
         updated_at: new Date(event.created_at), // Use created_at as fallback since updated_at isn't in SELECT
+        resolution_type: event.resolution_type ?? undefined,
+        resolution_notes: event.resolution_notes ?? null,
+        resolved_at: event.resolved_at ? new Date(event.resolved_at) : null,
       }
     })
 

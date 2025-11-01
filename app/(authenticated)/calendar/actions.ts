@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto"
 import { revalidatePath } from "next/cache"
 import { requirePermission, type UserRole } from "@/lib/auth/permissions"
 import { createClient } from "@/lib/supabase/server"
+import type { EventResolutionType, EventStatus } from "@/lib/types/calendar"
 import { getErrorMessage } from "@/lib/utils/errors"
 
 /**
@@ -257,9 +258,15 @@ export async function updateCalendarEvent(
 /**
  * Quick update event status action for rapid state changes
  */
+export interface UpdateEventStatusOptions {
+  resolutionType?: EventResolutionType
+  resolutionNotes?: string
+}
+
 export async function updateEventStatus(
   eventId: string,
-  newStatus: "scheduled" | "in-progress" | "completed" | "cancelled"
+  newStatus: EventStatus,
+  options?: UpdateEventStatusOptions
 ): Promise<ActionState> {
   const supabase = await createClient()
 
@@ -308,9 +315,24 @@ export async function updateEventStatus(
     }
   }
 
+  const isTerminal = newStatus === "completed" || newStatus === "cancelled"
+  if (isTerminal && !options?.resolutionType) {
+    return {
+      error:
+        "Please select a resolution type before marking this event as resolved.",
+    }
+  }
+
   const { error } = await supabase
     .from("calendar_events")
-    .update({ status: newStatus })
+    .update({
+      status: newStatus,
+      resolution_type: isTerminal ? (options?.resolutionType ?? null) : null,
+      resolution_notes: isTerminal
+        ? options?.resolutionNotes?.trim() || null
+        : null,
+      resolved_at: isTerminal ? new Date().toISOString() : null,
+    })
     .eq("id", eventId)
     .eq("organization_id", profile.organizationId)
 

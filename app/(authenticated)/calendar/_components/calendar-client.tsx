@@ -11,6 +11,11 @@ import { TimelineView } from "@/components/calendar/views/timeline-view"
 import { WeekView } from "@/components/calendar/views/week-view"
 import { WeeklyRosterDialog } from "@/components/calendar/weekly-roster-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useCalendarStore } from "@/lib/stores/calendar-store"
 import type { CalendarEvent } from "@/lib/types/calendar"
 import { CreateEventDialog } from "./create-event-dialog"
@@ -66,13 +71,20 @@ export function CalendarClient({ initialEvents }: CalendarClientProps) {
       <div className="flex items-center justify-between gap-4 border-b bg-background px-6 py-4">
         <CalendarHeader />
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setRosterOpen(true)}
-          >
-            Weekly Roster
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRosterOpen(true)}
+              >
+                Weekly Roster
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Manage weekly driver assignments and schedules</p>
+            </TooltipContent>
+          </Tooltip>
           <CreateEventDialog />
         </div>
       </div>

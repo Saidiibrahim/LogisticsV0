@@ -22,6 +22,11 @@ export type EventStatus =
   | "cancelled" // Event has been cancelled
 
 /**
+ * Resolution values captured when an event reaches a terminal state.
+ */
+export type EventResolutionType = "done" | "wont_do"
+
+/**
  * Calendar event interface matching the calendar_events table structure.
  * All event types (delivery, pickup, meeting, etc.) use this single interface.
  */
@@ -54,6 +59,9 @@ export interface CalendarEvent {
   created_by: string
   created_at: Date
   updated_at: Date
+  resolution_type?: EventResolutionType
+  resolution_notes?: string | null
+  resolved_at?: Date | null
 }
 
 /**
